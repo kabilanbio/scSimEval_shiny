@@ -903,19 +903,26 @@ ui <- page_navbar(
             style = "display: flex; align-items: flex-start;",
             div(style = "font-size: 1.6rem; color: #D97706; margin-right: 16px; margin-top: 2px;", icon("server")),
             div(
-              h5(tags$b("Computational Scalability: Cloud Hosting vs. Local R Package"), style = "margin-top: 0; margin-bottom: 6px; color: #92400E; font-weight: 800;"),
+              h5(tags$b("Computational Scalability & Multiomics Guidelines: Cloud Hosting vs. Local R Package"), style = "margin-top: 0; margin-bottom: 8px; color: #92400E; font-weight: 800;"),
               p(
-                "The web-hosted studio on Posit Connect Cloud runs on a container allocated with ", tags$b("4 GB RAM and 1 CPU core"), ". It is best suited for exploring the pre-computed benchmark results across 6 simulators or evaluating small-to-moderate datasets:",
+                "The web-hosted studio on Posit Connect Cloud operates on a server container allocated with ", tags$b("4 GB RAM and 1 CPU core"), ". It is optimized for interactive benchmarking, exploring the pre-computed 6-simulator results, and evaluating small-to-moderate datasets:",
                 style = "margin-bottom: 6px; font-size: 0.93rem; line-height: 1.5;"
               ),
               tags$ul(
                 style = "margin-bottom: 8px; padding-left: 20px; font-size: 0.91rem;",
-                tags$li(tags$b("Single-cell RNA-seq: "), "recommended up to ~3,000 – 4,000 cells and ~2,000 – 3,000 genes (or top variable genes / HVGs)."),
-                tags$li(tags$b("Single-cell ATAC-seq / Multiomics: "), "recommended up to ~2,000 – 3,000 cells and ~5,000 – 8,000 peaks.")
+                tags$li(tags$b("Unimodal scRNA-seq: "), "recommended up to ~3,000 – 4,000 cells and ~2,000 – 3,000 genes (or top variable genes / HVGs)."),
+                tags$li(tags$b("Unimodal scATAC-seq: "), "recommended up to ~2,000 – 3,000 cells and ~5,000 – 8,000 accessible peaks.")
+              ),
+              div(
+                style = "background: rgba(245, 158, 11, 0.12); border: 1px dashed #D97706; border-radius: 6px; padding: 10px 14px; margin: 10px 0 12px 0;",
+                h6(tags$b("Single-Cell Multiomics (scRNA-seq + scATAC-seq) Possibilities & Architectural Limits:"), style = "margin: 0 0 6px 0; color: #B45309; font-weight: 700; font-size: 0.92rem;"),
+                p(tags$b("• Computational Possibilities: "), "Supports paired co-assays (e.g. 10x Multiome, SHARE-seq, SNARE-seq), unpaired profiling (separate cells from same tissue), and mosaic designs. Seamlessly computes Category 7 cross-modal coupling measures (peak-to-gene linkages, TF regulatory fidelity, cross-modal cell concordance, and RNA-ATAC cluster agreement) alongside all 8 unimodal evaluation categories for each biological layer.", style = "margin-bottom: 4px; font-size: 0.88rem;"),
+                p(tags$b("• Multiomics Memory Bottleneck: "), "Evaluating multiomics datasets requires loading ", tags$b("four simultaneous high-dimensional matrices"), " (Real RNA, Real ATAC, Simulated RNA, Simulated ATAC). Because chromatin accessibility peaksets typically feature 50,000–100,000+ genomic regions with extreme sparsity (>95–99% zeros), analyzing unfiltered genome-wide peaksets easily exceeds the 4GB RAM ceiling.", style = "margin-bottom: 4px; font-size: 0.88rem;"),
+                p(tags$b("• Cloud Multiomics Sizing Guide: "), "For smooth execution on this cloud instance, filter peak matrices to the top ", tags$b("5,000 – 8,000 promoter / enhancer / variable peaks"), " and keep cell counts to ", tags$b("~2,000 – 3,000 cells"), ". Filter out ultra-rare peaks (<1-2% cells) prior to upload to prevent out-of-memory crashes.", style = "margin-bottom: 0; font-size: 0.88rem;")
               ),
               p(
-                tags$b("For large-scale single-cell datasets "),
-                "(>5,000 – 20,000+ cells, 10,000+ genes/peaks, or full genome-wide peaksets), please use the inbuilt Shiny application in the ", tags$b("scSimEval"), " R package locally. Running locally leverages your workstation's full physical RAM and multi-core CPU without cloud timeout or memory ceilings:",
+                tags$b("For large-scale single-cell & multiomics datasets "),
+                "(>5,000 – 50,000+ cells, 20,000+ genes, or full genome-wide peaksets with 50,000–150,000+ peaks), please use the inbuilt Shiny application in the ", tags$b("scSimEval"), " R package locally. Running locally leverages your workstation's full physical RAM (16–64+ GB) and multi-core CPU without cloud timeout or memory ceilings:",
                 style = "margin-bottom: 6px; font-size: 0.92rem; line-height: 1.5;"
               ),
               tags$pre(
@@ -998,9 +1005,11 @@ ui <- page_navbar(
           div(
             class = "alert alert-warning py-2 px-3",
             style = "font-size: 0.81rem; margin-bottom: 12px; border-left: 3px solid #F59E0B; background-color: #FFFBEB; color: #92400E;",
-            icon("info-circle"), tags$b(" Cloud Capacity Notice (4GB RAM / 1 CPU): "),
-            "Best for up to ~2,000–3,000 cells & 5,000–8,000 peaks. For large multiomics datasets, run locally via ",
-            tags$code("scSimEval::launch_scSimEval_app()"), "."
+            div(style = "font-weight: 700; margin-bottom: 3px;", icon("exclamation-triangle"), " Multiomics Sizing & Memory Notice (Cloud 4GB RAM / 1 CPU):"),
+            p("• ", tags$b("Quad-Matrix Load: "), "Evaluates 4 matrices concurrently (Real RNA + ATAC, Simulated RNA + ATAC).", style = "margin-bottom: 2px;"),
+            p("• ", tags$b("Recommended Limits: "), "Up to ~2,000–3,000 cells, 2,000–3,000 genes, and 5,000–8,000 peaks.", style = "margin-bottom: 2px;"),
+            p("• ", tags$b("Peak Filtering Tip: "), "Pre-filter rare peaks (detected in <1-2% cells) before upload to avoid memory limits.", style = "margin-bottom: 2px;"),
+            p("• ", tags$b("Full Genome Peaksets (50k+ peaks): "), "Run locally via ", tags$code("scSimEval::launch_scSimEval_app()"), " to utilize full workstation RAM.", style = "margin-bottom: 0;")
           ),
           radioButtons(
             "opt_multi_pairing", "Multiomics Dataset Type:",
@@ -2150,6 +2159,24 @@ ui <- page_navbar(
                   style = "background: #1E293B; color: #F8FAFC; padding: 10px 14px; border-radius: 6px; margin: 8px 0 0 0; font-size: 0.85rem; font-family: monospace;",
                   '# Install and launch scSimEval locally in R:\nremotes::install_github("kabilanbio/scSimEval")\nscSimEval::launch_scSimEval_app()'
                 )
+              ),
+              hr(),
+              h6(tags$b("6.2 Single-Cell Multiomics (scRNA-seq + scATAC-seq): Possibilities & Architectural Constraints"), style = "color: #0369A1; font-weight: 800; margin-top: 14px; margin-bottom: 8px;"),
+              p(
+                "Single-cell multiomics simulation benchmarking poses unique computational considerations compared to unimodal RNA-seq:",
+                style = "color: #334155; font-size: 0.91rem; margin-bottom: 8px;"
+              ),
+              tags$ul(
+                style = "color: #334155; font-size: 0.90rem; padding-left: 20px; margin-bottom: 10px;",
+                tags$li(tags$b("Evaluation Possibilities: "), "scSimEval supports paired co-assays (10x Multiome, SHARE-seq, SNARE-seq), unpaired multiomics (separate cells from same tissue), and mosaic co-measurement. It systematically quantifies Category 7: Multiomics Coupling (peak-to-gene linkage preservation, TF regulatory consistency, cross-modal cell correlation, and cross-layer cluster concordance ARI/NMI), alongside all 8 unimodal evaluation categories for each layer."),
+                tags$li(tags$b("Quad-Matrix Memory Footprint: "), "Unlike unimodal workflows that load 2 matrices (real + simulated), multiomics benchmarking requires loading at least 4 high-dimensional matrices simultaneously (Real RNA, Real ATAC, Simulated RNA, Simulated ATAC). With multiple simulators, memory scales by 2 matrices per additional method."),
+                tags$li(tags$b("Peak Dimension & Sparsity Bottleneck: "), "scATAC-seq peaksets typically contain 50,000–150,000+ genomic regions with >95–99% zero counts. Evaluating uncompressed, unfiltered peak matrices for thousands of cells will exceed the 4 GB server RAM limit and cause an out-of-memory (OOM) termination on the cloud host."),
+                tags$li(tags$b("Algorithmic Complexity: "), "Calculating cell-cell distance matrices and cross-modal peak-to-gene linkages scales quadratically O(N^2) or bi-linearly O(G x P), leading to CPU throttling on a shared 1 vCPU cloud environment.")
+              ),
+              p(
+                tags$b("Recommended Best Practice: "),
+                "On this cloud instance, pre-filter peaksets to the top 5,000 – 8,000 most accessible / promoter / variable peaks and keep cell counts <= 3,000 cells. For full genome-wide peaksets (50,000+ peaks) or large multiomics atlases (>5,000 cells), use the inbuilt Shiny app in the local scSimEval R package (", tags$code("scSimEval::launch_scSimEval_app()"), ") where sparse Matrix (dgCMatrix) handling and multi-core processing leverage your full workstation memory.",
+                style = "color: #334155; font-size: 0.91rem; margin-bottom: 0;"
               )
             )
         )
@@ -2425,7 +2452,7 @@ server <- function(input, output, session) {
     
     # Resilient fallback counter: persistent across local/hosted sessions
     cache_path <- "pageviews_cache.rds"
-    views <- 1285
+    views <- 0
     if (file.exists(cache_path)) {
       try({
         cached <- readRDS(cache_path)
