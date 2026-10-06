@@ -893,6 +893,40 @@ ui <- page_navbar(
       )
     ),
     
+    fluidRow(
+      column(
+        12,
+        div(
+          class = "alert alert-warning",
+          style = "border-left: 5px solid #F59E0B; background-color: #FFFBEB; color: #78350F; border-radius: 9px; padding: 18px 22px; margin-top: 15px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);",
+          div(
+            style = "display: flex; align-items: flex-start;",
+            div(style = "font-size: 1.6rem; color: #D97706; margin-right: 16px; margin-top: 2px;", icon("server")),
+            div(
+              h5(tags$b("Computational Scalability: Cloud Hosting vs. Local R Package"), style = "margin-top: 0; margin-bottom: 6px; color: #92400E; font-weight: 800;"),
+              p(
+                "The web-hosted studio on Posit Connect Cloud runs on a container allocated with ", tags$b("4 GB RAM and 1 CPU core"), ". It is best suited for exploring the pre-computed benchmark results across 6 simulators or evaluating small-to-moderate datasets:",
+                style = "margin-bottom: 6px; font-size: 0.93rem; line-height: 1.5;"
+              ),
+              tags$ul(
+                style = "margin-bottom: 8px; padding-left: 20px; font-size: 0.91rem;",
+                tags$li(tags$b("Single-cell RNA-seq: "), "recommended up to ~3,000 – 4,000 cells and ~2,000 – 3,000 genes (or top variable genes / HVGs)."),
+                tags$li(tags$b("Single-cell ATAC-seq / Multiomics: "), "recommended up to ~2,000 – 3,000 cells and ~5,000 – 8,000 peaks.")
+              ),
+              p(
+                tags$b("For large-scale single-cell datasets "),
+                "(>5,000 – 20,000+ cells, 10,000+ genes/peaks, or full genome-wide peaksets), please use the inbuilt Shiny application in the ", tags$b("scSimEval"), " R package locally. Running locally leverages your workstation's full physical RAM and multi-core CPU without cloud timeout or memory ceilings:",
+                style = "margin-bottom: 6px; font-size: 0.92rem; line-height: 1.5;"
+              ),
+              tags$pre(
+                style = "background: #FEF3C7; color: #78350F; border: 1px solid #FDE68A; padding: 8px 14px; border-radius: 6px; margin-bottom: 0; font-size: 0.85rem; font-family: monospace;",
+                '# Install and launch scSimEval Shiny Studio locally in R:\nremotes::install_github("kabilanbio/scSimEval")\nscSimEval::launch_scSimEval_app()'
+              )
+            )
+          )
+        )
+      )
+    ),
     # Fixed Floating Page View Counter Widget (Google Analytics)
     div(
       class = "pageview-box",
@@ -934,6 +968,13 @@ ui <- page_navbar(
         # Mode 2: Single-Cell Evaluation (scRNA-seq or scATAC-seq) - 1 or multiple simulators
         conditionalPanel(
           condition = "input.opt_data_mode == 'unimodal'",
+          div(
+            class = "alert alert-warning py-2 px-3",
+            style = "font-size: 0.81rem; margin-bottom: 12px; border-left: 3px solid #F59E0B; background-color: #FFFBEB; color: #92400E;",
+            icon("info-circle"), tags$b(" Cloud Capacity Notice (4GB RAM / 1 CPU): "),
+            "Best for up to ~3,000–4,000 cells & 2,000–3,000 genes. For large datasets, run locally via ",
+            tags$code("scSimEval::launch_scSimEval_app()"), "."
+          ),
           h6(tags$b("1. Reference Biological Dataset (Real Cells)")),
           fileInput("file_uni_ref", "Reference Count Matrix (.rds / .csv / .tsv / .txt):", accept = c(".rds", ".csv", ".tsv", ".txt")),
           uiOutput("ui_uni_ref_badge"),
@@ -954,6 +995,13 @@ ui <- page_navbar(
         # Mode 3: Multiomics Evaluation (scRNA-seq + scATAC-seq) - 1 or multiple simulators
         conditionalPanel(
           condition = "input.opt_data_mode == 'multiomics'",
+          div(
+            class = "alert alert-warning py-2 px-3",
+            style = "font-size: 0.81rem; margin-bottom: 12px; border-left: 3px solid #F59E0B; background-color: #FFFBEB; color: #92400E;",
+            icon("info-circle"), tags$b(" Cloud Capacity Notice (4GB RAM / 1 CPU): "),
+            "Best for up to ~2,000–3,000 cells & 5,000–8,000 peaks. For large multiomics datasets, run locally via ",
+            tags$code("scSimEval::launch_scSimEval_app()"), "."
+          ),
           radioButtons(
             "opt_multi_pairing", "Multiomics Dataset Type:",
             choices = c(
@@ -2042,6 +2090,68 @@ ui <- page_navbar(
               )
             )
           )
+            ,
+            # ------------------------------------------------------------------
+            # Section 6: Computational Sizing Guide: Cloud Hosting vs. Local Package
+            # ------------------------------------------------------------------
+            div(
+              style = "margin-top: 26px; padding: 22px 24px; background: #FFFFFF; border: 1.5px solid #CBD5E1; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);",
+              h5(tags$b("Computational Resources & Dataset Sizing Guidelines"), style = "color: #1E3A8A; margin-top: 0; margin-bottom: 10px; font-weight: 800;"),
+              p(
+                "Depending on your dataset dimensionality (cells, genes, and peaks), choose between this hosted cloud app and the local R package Shiny application:",
+                style = "color: #475569; font-size: 0.93rem; margin-bottom: 14px;"
+              ),
+              tags$div(
+                class = "table-responsive",
+                tags$table(
+                  class = "table table-bordered table-sm",
+                  style = "font-size: 0.88rem; vertical-align: middle;",
+                  tags$thead(
+                    style = "background-color: #F8FAFC;",
+                    tags$tr(
+                      tags$th("Environment"),
+                      tags$th("Hardware Allocation"),
+                      tags$th("Recommended Dataset Dimensions"),
+                      tags$th("Best Use Case")
+                    )
+                  ),
+                  tags$tbody(
+                    tags$tr(
+                      tags$td(tags$b("Hosted Web App (Cloud)")),
+                      tags$td("4 GB RAM, 1 vCPU"),
+                      tags$td(
+                        tags$ul(
+                          style = "margin-bottom: 0; padding-left: 18px;",
+                          tags$li(tags$b("scRNA-seq: "), "Up to ~3,000 – 4,000 cells × ~2,000 – 3,000 genes"),
+                          tags$li(tags$b("scATAC / Multiomics: "), "Up to ~2,000 – 3,000 cells × ~5,000 – 8,000 peaks")
+                        )
+                      ),
+                      tags$td("Instant exploration, reviewing pre-computed 6-simulator benchmarks, pilot evaluations without installing R.")
+                    ),
+                    tags$tr(
+                      tags$td(tags$b("Inbuilt App in Local R Package")),
+                      tags$td("User's Workstation (e.g. 16–128 GB RAM, multi-core CPU)"),
+                      tags$td(
+                        tags$ul(
+                          style = "margin-bottom: 0; padding-left: 18px;",
+                          tags$li(tags$b("Scalable: "), "5,000 – 50,000+ cells, 20,000+ genes, genome-wide peaksets"),
+                          tags$li(tags$b("No memory ceilings: "), "Full hardware RAM utilization")
+                        )
+                      ),
+                      tags$td("Production benchmarking, large multiomics atlases, publication-grade high-throughput evaluation.")
+                    )
+                  )
+                )
+              ),
+              tags$div(
+                style = "margin-top: 14px; background: #F8FAFC; border-radius: 8px; padding: 12px 16px; border: 1px solid #E2E8F0;",
+                tags$b("How to launch the local R package Shiny app:"),
+                tags$pre(
+                  style = "background: #1E293B; color: #F8FAFC; padding: 10px 14px; border-radius: 6px; margin: 8px 0 0 0; font-size: 0.85rem; font-family: monospace;",
+                  '# Install and launch scSimEval locally in R:\nremotes::install_github("kabilanbio/scSimEval")\nscSimEval::launch_scSimEval_app()'
+                )
+              )
+            )
         )
       )
     )
