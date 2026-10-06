@@ -1,0 +1,10 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# Google Analytics credentials & runtime cache
+*google_key.json
+*.key.json
+pageviews_cache.rds
