@@ -2260,20 +2260,27 @@ server <- function(input, output, session) {
   # Google Analytics: Live / Cached Page Views Counter
   # ----------------------------------------------------------------------------
   output$total_pageviews <- renderText({
-    ga_key <- Sys.getenv("GA_AUTH_FILE", "")
-    if (!nzchar(ga_key)) {
-      candidates <- c(
-        "google_key.json",
-        file.path("www", "google_key.json"),
-        file.path("inst", "shiny", "scSimEvalApp", "google_key.json"),
-        file.path("inst", "shiny", "scSimEvalApp", "www", "google_key.json"),
-        file.path("..", "google_key.json"),
-        file.path("..", "..", "google_key.json")
-      )
-      for (cand in candidates) {
-        if (file.exists(cand)) {
-          ga_key <- cand
-          break
+    ga_key_content <- Sys.getenv("GA_KEY_JSON", "")
+    if (nzchar(ga_key_content)) {
+      tmp_key <- tempfile(fileext = ".json")
+      writeLines(ga_key_content, tmp_key)
+      ga_key <- tmp_key
+    } else {
+      ga_key <- Sys.getenv("GA_AUTH_FILE", "")
+      if (!nzchar(ga_key)) {
+        candidates <- c(
+          "google_key.json",
+          file.path("www", "google_key.json"),
+          file.path("inst", "shiny", "scSimEvalApp", "google_key.json"),
+          file.path("inst", "shiny", "scSimEvalApp", "www", "google_key.json"),
+          file.path("..", "google_key.json"),
+          file.path("..", "..", "google_key.json")
+        )
+        for (cand in candidates) {
+          if (file.exists(cand)) {
+            ga_key <- cand
+            break
+          }
         }
       }
     }
