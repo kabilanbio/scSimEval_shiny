@@ -13,48 +13,6 @@
 The application is hosted on **Posit Connect Cloud**:
 👉 **[https://kabilanbio-scsimeval.share.connect.posit.cloud/](https://kabilanbio-scsimeval.share.connect.posit.cloud/)**
 
----
-
-## 🛠️ Local Installation & Running
-
-To run this Shiny application locally on your computer:
-
-```r
-# 1. Install required dependencies
-install.packages(c("shiny", "bslib", "ggplot2", "DT", "Matrix", "remotes", "googleAnalyticsR"))
-
-# 2. Install scSimEval package from GitHub
-remotes::install_github("kabilanbio/scSimEval")
-
-# 3. Launch the Shiny application
-shiny::runApp()
-```
-
----
-
-## ☁️ Deployment to Posit Connect Cloud
-
-This repository is pre-configured for automated deployment to Posit Connect Cloud:
-
-```r
-install.packages("rsconnect")
-library(rsconnect)
-
-rsconnect::deployApp(
-  appDir  = ".",
-  appName = "scsimeval",
-  account = "kabilanbio"
-)
-```
-
-### Environment Variables
-Configure the following in the Posit Connect Cloud dashboard:
-* `GA_MEASUREMENT_ID`: `G-D4BY0FVPTQ`
-* `GA_PROPERTY_ID`: `557610038`
-* `GA_AUTH_FILE`: `google_key.json`
-
----
-
 ## 👥 Authors & Maintainers
 
 * **Sakthivel Kabilan** (Ph.D. Scholar, ICAR-IASRI, New Delhi) - [kabilan151414@gmail.com](mailto:kabilan151414@gmail.com)
