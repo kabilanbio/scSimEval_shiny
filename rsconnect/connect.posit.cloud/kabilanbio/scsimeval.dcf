@@ -1,0 +1,10 @@
+name: scsimeval
+title:
+username: kabilanbio
+account: kabilanbio
+server: connect.posit.cloud
+hostUrl: https://api.connect.posit.cloud/v1
+appId: 01a110a9-af33-a835-9c5e-1909c3d87c29
+bundleId:
+url:
+version: 1
