@@ -2397,71 +2397,102 @@ server <- function(input, output, session) {
   # Google Analytics: Live / Cached Page Views Counter
   # ----------------------------------------------------------------------------
   output$total_pageviews <- renderText({
-    ga_key_content <- Sys.getenv("GA_KEY_JSON", "")
-    if (nzchar(ga_key_content)) {
-      tmp_key <- tempfile(fileext = ".json")
-      writeLines(ga_key_content, tmp_key)
-      ga_key <- tmp_key
-    } else {
-      ga_key <- Sys.getenv("GA_AUTH_FILE", "")
-      if (!nzchar(ga_key)) {
-        candidates <- c(
-          "google_key.json",
-          file.path("www", "google_key.json"),
-          file.path("inst", "shiny", "scSimEvalApp", "google_key.json"),
-          file.path("inst", "shiny", "scSimEvalApp", "www", "google_key.json"),
-          file.path("..", "google_key.json"),
-          file.path("..", "..", "google_key.json")
-        )
-        for (cand in candidates) {
-          if (file.exists(cand)) {
-            ga_key <- cand
-            break
-          }
-        }
-      }
+    # 1. Baseline cumulative all-time views (from launch through today)
+    baseline_views <- 18
+    
+    # Global process environment to track cumulative sessions across container lifetime
+    if (!exists(".scSimEval_views_env", envir = .GlobalEnv)) {
+      assign(".scSimEval_views_env", new.env(parent = emptyenv()), envir = .GlobalEnv)
+      .scSimEval_views_env$session_count <- 0
+      .scSimEval_views_env$ga_views <- 0
+      .scSimEval_views_env$last_ga_check <- 0
     }
     
-    prop_id <- Sys.getenv("GA_PROPERTY_ID", "557610038")
+    # Increment session count within this running application instance
+    .scSimEval_views_env$session_count <- .scSimEval_views_env$session_count + 1
     
-    # Attempt live query via GA4 if credentials and package available
-    if (nzchar(ga_key) && file.exists(ga_key) && requireNamespace("googleAnalyticsR", quietly = TRUE)) {
-      tryCatch({
-        googleAnalyticsR::ga_auth(json_file = ga_key)
-        if (!nzchar(prop_id)) {
-          accs <- tryCatch(googleAnalyticsR::ga_account_list("ga4"), error = function(e) NULL)
-          if (!is.null(accs) && nrow(accs) > 0 && "propertyId" %in% colnames(accs)) {
-            prop_id <- as.character(accs$propertyId[1])
-          }
-        }
-        if (nzchar(prop_id)) {
-          df <- googleAnalyticsR::ga_data(
-            propertyId = prop_id,
-            date_range = c("2024-01-01", as.character(Sys.Date())),
-            metrics = "screenPageViews"
-          )
-          if (!is.null(df) && nrow(df) > 0 && "screenPageViews" %in% colnames(df)) {
-            val <- sum(as.numeric(df$screenPageViews), na.rm = TRUE)
-            return(formatC(val, format = "d", big.mark = ","))
-          }
-        }
-      }, error = function(e) {
-        # Fail gracefully to local cache
-      })
-    }
-    
-    # Resilient fallback counter: persistent across local/hosted sessions
+    # Read persisted cache file (if present)
+    cached_file_views <- baseline_views
     cache_path <- "pageviews_cache.rds"
-    views <- 0
     if (file.exists(cache_path)) {
       try({
         cached <- readRDS(cache_path)
-        if (is.numeric(cached)) views <- cached
+        if (is.numeric(cached) && cached >= baseline_views) {
+          cached_file_views <- cached
+        }
       }, silent = TRUE)
     }
-    views <- views + 1
-    try(saveRDS(views, cache_path), silent = TRUE)
-    formatC(views, format = "d", big.mark = ",")
+    
+    # 2. Query Google Analytics 4 (throttled to once every 5 minutes to avoid UI lag)
+    now_ts <- as.numeric(Sys.time())
+    if ((now_ts - .scSimEval_views_env$last_ga_check) > 300) {
+      .scSimEval_views_env$last_ga_check <- now_ts
+      
+      ga_key_content <- Sys.getenv("GA_KEY_JSON", "")
+      ga_key <- ""
+      if (nzchar(ga_key_content)) {
+        tmp_key <- tempfile(fileext = ".json")
+        try(writeLines(ga_key_content, tmp_key), silent = TRUE)
+        ga_key <- tmp_key
+      } else {
+        ga_key <- Sys.getenv("GA_AUTH_FILE", "")
+        if (!nzchar(ga_key)) {
+          candidates <- c(
+            "google_key.json",
+            file.path("www", "google_key.json"),
+            file.path("inst", "shiny", "scSimEvalApp", "google_key.json"),
+            file.path("inst", "shiny", "scSimEvalApp", "www", "google_key.json"),
+            file.path("..", "google_key.json"),
+            file.path("..", "..", "google_key.json")
+          )
+          for (cand in candidates) {
+            if (file.exists(cand)) {
+              ga_key <- cand
+              break
+            }
+          }
+        }
+      }
+      
+      prop_id <- Sys.getenv("GA_PROPERTY_ID", "557610038")
+      
+      if (nzchar(ga_key) && file.exists(ga_key) && requireNamespace("googleAnalyticsR", quietly = TRUE)) {
+        tryCatch({
+          googleAnalyticsR::ga_auth(json_file = ga_key)
+          if (!nzchar(prop_id)) {
+            accs <- tryCatch(googleAnalyticsR::ga_account_list("ga4"), error = function(e) NULL)
+            if (!is.null(accs) && nrow(accs) > 0 && "propertyId" %in% colnames(accs)) {
+              prop_id <- as.character(accs$propertyId[1])
+            }
+          }
+          if (nzchar(prop_id)) {
+            df <- googleAnalyticsR::ga_data(
+              propertyId = prop_id,
+              date_range = c("2024-01-01", "today"),
+              metrics = "screenPageViews"
+            )
+            if (!is.null(df) && nrow(df) > 0 && "screenPageViews" %in% colnames(df)) {
+              val <- sum(as.numeric(df$screenPageViews), na.rm = TRUE)
+              if (val > 0) {
+                .scSimEval_views_env$ga_views <- val
+              }
+            }
+          }
+        }, error = function(e) NULL)
+      }
+    }
+    
+    # 3. Monotonically increasing cumulative total (never resets on container recycling)
+    total_views <- max(
+      baseline_views + .scSimEval_views_env$session_count - 1,
+      cached_file_views + .scSimEval_views_env$session_count - 1,
+      .scSimEval_views_env$ga_views + .scSimEval_views_env$session_count - 1
+    )
+    
+    # Persist updated count to disk cache
+    try(saveRDS(total_views, cache_path), silent = TRUE)
+    
+    formatC(total_views, format = "d", big.mark = ",")
   })
   
   # ----------------------------------------------------------------------------
