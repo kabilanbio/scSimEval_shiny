@@ -701,8 +701,14 @@ ui <- page_navbar(
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', '%s');
-    ", ga_measurement_id))),
+      gtag('config', '%s', {
+        'cookie_flags': 'SameSite=None;Secure'
+      });
+      gtag('event', 'page_view', {
+        'page_title': 'scSimEval Shiny Studio',
+        'page_location': window.location.href
+      });
+    ", ga_measurement_id, ga_measurement_id))),
     
     tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"),
     tags$style(HTML("
