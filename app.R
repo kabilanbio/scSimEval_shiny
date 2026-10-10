@@ -828,6 +828,40 @@ ui <- page_navbar(
         border-color: #3B82F6;
         background: #FFFFFF;
       }
+
+      /* ===== PAGE VIEW COUNTER (Google Analytics) ===== */
+      .pageview-box {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: rgba(255, 255, 255, 0.96);
+        border: 1px solid #C5D5E6;
+        border-radius: 8px;
+        padding: 9px 14px;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+        z-index: 1050;
+        width: 165px;
+        text-align: center;
+        transition: all 0.25s ease;
+      }
+      .pageview-box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+        border-color: #1B4F72;
+        background-color: #FFFFFF;
+      }
+      .pageview-title {
+        font-weight: 600;
+        margin-bottom: 3px;
+        font-size: 11.5px;
+        color: #475569;
+        letter-spacing: 0.3px;
+      }
+      .pageview-count {
+        font-size: 19px;
+        font-weight: 800;
+        color: #1B4F72;
+      }
     "))
   ),
   
@@ -983,6 +1017,14 @@ ui <- page_navbar(
           "Local Studio: ", tags$code("scSimEval::launch_scSimEval_app()", style = "background: #E2E8F0; color: #334155; padding: 2px 6px; border-radius: 4px; font-size: 0.76rem;")
         )
       )
+    ),
+    
+    # Fixed Floating Page View Counter Widget (Google Analytics)
+    div(
+      class = "pageview-box",
+      div(class = "pageview-title", icon("eye"), " Total Page Views"),
+      div(class = "pageview-count", textOutput("total_pageviews")),
+      div(style = "font-size: 10px; opacity: 0.75; margin-top: 3px; color: #64748B;", "All Time")
     )
   ),
   
@@ -2531,6 +2573,108 @@ server <- function(input, output, session) {
   observeEvent(input$btn_go_help, { nav_select("nav_active", "Help & Getting Started") })
   observeEvent(input$btn_go_contact, { nav_select("nav_active", "Contact") })
   observeEvent(input$btn_empty_help, { nav_select("nav_active", "Help & Getting Started") })
+
+  # ----------------------------------------------------------------------------
+  # Google Analytics: Live / Cached Page Views Counter
+  # ----------------------------------------------------------------------------
+  output$total_pageviews <- renderText({
+    # 1. Baseline cumulative all-time views (from launch through today)
+    baseline_views <- 18
+    
+    # Global process environment to track cumulative sessions across container lifetime
+    if (!exists(".scSimEval_views_env", envir = .GlobalEnv)) {
+      assign(".scSimEval_views_env", new.env(parent = emptyenv()), envir = .GlobalEnv)
+      .scSimEval_views_env$session_count <- 0
+      .scSimEval_views_env$ga_views <- 0
+      .scSimEval_views_env$last_ga_check <- 0
+    }
+    
+    # Increment session count within this running application instance
+    .scSimEval_views_env$session_count <- .scSimEval_views_env$session_count + 1
+    
+    # Read persisted cache file (if present)
+    cached_file_views <- baseline_views
+    cache_path <- "pageviews_cache.rds"
+    if (file.exists(cache_path)) {
+      try({
+        cached <- readRDS(cache_path)
+        if (is.numeric(cached) && cached >= baseline_views) {
+          cached_file_views <- cached
+        }
+      }, silent = TRUE)
+    }
+    
+    # 2. Query Google Analytics 4 (throttled to once every 5 minutes to avoid UI lag)
+    now_ts <- as.numeric(Sys.time())
+    if ((now_ts - .scSimEval_views_env$last_ga_check) > 300) {
+      .scSimEval_views_env$last_ga_check <- now_ts
+      
+      ga_key_content <- Sys.getenv("GA_KEY_JSON", "")
+      ga_key <- ""
+      if (nzchar(ga_key_content)) {
+        tmp_key <- tempfile(fileext = ".json")
+        try(writeLines(ga_key_content, tmp_key), silent = TRUE)
+        ga_key <- tmp_key
+      } else {
+        ga_key <- Sys.getenv("GA_AUTH_FILE", "")
+        if (!nzchar(ga_key)) {
+          candidates <- c(
+            "google_key.json",
+            file.path("www", "google_key.json"),
+            file.path("inst", "shiny", "scSimEvalApp", "google_key.json"),
+            file.path("inst", "shiny", "scSimEvalApp", "www", "google_key.json"),
+            file.path("..", "google_key.json"),
+            file.path("..", "..", "google_key.json")
+          )
+          for (cand in candidates) {
+            if (file.exists(cand)) {
+              ga_key <- cand
+              break
+            }
+          }
+        }
+      }
+      
+      prop_id <- Sys.getenv("GA_PROPERTY_ID", "557610038")
+      
+      if (nzchar(ga_key) && file.exists(ga_key) && requireNamespace("googleAnalyticsR", quietly = TRUE)) {
+        tryCatch({
+          googleAnalyticsR::ga_auth(json_file = ga_key)
+          if (!nzchar(prop_id)) {
+            accs <- tryCatch(googleAnalyticsR::ga_account_list("ga4"), error = function(e) NULL)
+            if (!is.null(accs) && nrow(accs) > 0 && "propertyId" %in% colnames(accs)) {
+              prop_id <- as.character(accs$propertyId[1])
+            }
+          }
+          if (nzchar(prop_id)) {
+            df <- googleAnalyticsR::ga_data(
+              propertyId = prop_id,
+              date_range = c("2024-01-01", "today"),
+              metrics = "screenPageViews"
+            )
+            if (!is.null(df) && nrow(df) > 0 && "screenPageViews" %in% colnames(df)) {
+              val <- sum(as.numeric(df$screenPageViews), na.rm = TRUE)
+              if (val > 0) {
+                .scSimEval_views_env$ga_views <- val
+              }
+            }
+          }
+        }, error = function(e) NULL)
+      }
+    }
+    
+    # 3. Monotonically increasing cumulative total (never resets on container recycling)
+    total_views <- max(
+      baseline_views + .scSimEval_views_env$session_count - 1,
+      cached_file_views + .scSimEval_views_env$session_count - 1,
+      .scSimEval_views_env$ga_views + .scSimEval_views_env$session_count - 1
+    )
+    
+    # Persist updated count to disk cache
+    try(saveRDS(total_views, cache_path), silent = TRUE)
+    
+    formatC(total_views, format = "d", big.mark = ",")
+  })
   # Modal format guide for cell types and batches
   show_metadata_format_modal <- function() {
     showModal(modalDialog(
