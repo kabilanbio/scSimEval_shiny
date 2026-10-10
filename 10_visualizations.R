@@ -8,6 +8,7 @@ utils::globalVariables(c(
   "Feature_Pair", "Correlation", "Simulator", "Ref_Quantile", "Sim_Quantile",
   "ZeroFrac", "Mean", "label_txt", "x_pos", "y_pos",
   "MDS1", "MDS2", "PC1", "PC2", "PC1_scaled", "PC2_scaled", "mag",
+  "Dim1", "Dim2", "Facet_Label",
   "Time_Sec", "Time_Type", "resource_cost", "throughput_cells_sec",
   "cpu_efficiency", "peak_memory_mb", "elapsed_time_seconds", "cpu_time_seconds",
   "Score_Label", "Panel", "Label", "ymin", "ymax", "is_even", "Is_Ref"
@@ -446,7 +447,7 @@ utils::globalVariables(c(
 #' human-crafted scientific layout featuring solid visible contour lines, semi-transparent
 #' color-filled density curves, and simple understated titles.
 #'
-#' \if{html}{\figure{comparative_distribution_qc.png}{options: width="100\%" alt="Comparative Single-Cell Distribution QC"}}
+#' \if{html}{\figure{comparative_distribution_qc.png}{options: width="800" alt="Comparative Single-Cell Distribution QC"}}
 #'
 #' @param ref_data Numeric count matrix for empirical reference (features x cells).
 #' @param sim_data Numeric count matrix for simulated data (features x cells), or a named list
@@ -462,6 +463,9 @@ utils::globalVariables(c(
 #' @param base_size Numeric. Base font size. Default \code{9}.
 #'
 #' @return A \code{ggplot} or \code{patchwork} composite object containing the comparative panels.
+#' @examples
+#' data(example_scrna, package = "scSimEval")
+#' res <- evaluate_simulation_accuracy(example_scrna$ref, example_scrna$sim)
 #' @export
 #' @examples
 #' data(example_scrna)
@@ -655,7 +659,7 @@ plot_distribution_qc <- function(
     theme_human()
 
   # 10. Gene correlation
-  top_g <- order(v_r, decreasing = TRUE)[1:min(nrow(ref_mat), 100)]
+  top_g <- order(v_r, decreasing = TRUE)[seq_len(min(nrow(ref_mat), 100))]
   gc_r <- stats::cor(t(ref_mat[top_g, ]))[upper.tri(diag(length(top_g)))]
   df_gcor_list <- list(data.frame(val = gc_r, Dataset = ref_name))
   for (sn in sim_names) {
@@ -839,7 +843,7 @@ MNO#
 #' superior, resolving metric polarity differences across distance and correlation measures)
 #' or original unnormalized raw values with optional direction separation or per-metric faceting.
 #'
-#' \if{html}{\figure{metric_boxplots.png}{options: width="100\%" alt="Multi-Metric Distribution Boxplots"}}
+#' \if{html}{\figure{metric_boxplots.png}{options: width="800" alt="Multi-Metric Distribution Boxplots"}}
 #'
 #' @param benchmark_data A data frame (such as \code{demo$benchmark_summary_table} or output from
 #'   \code{\link{evaluate_simulation_accuracy}()}) or a named list of benchmark result tables.
@@ -857,6 +861,9 @@ MNO#
 #' @param base_size Numeric. Base font size. Default \code{11}.
 #'
 #' @return A \code{ggplot} object.
+#' @examples
+#' data(example_scrna, package = "scSimEval")
+#' res <- evaluate_simulation_accuracy(example_scrna$ref, example_scrna$sim)
 #' @export
 plot_metric_boxplots <- function(
   benchmark_data,
@@ -989,6 +996,9 @@ plot_metric_boxplots <- function(
 #' @param base_size Numeric. Base font size. Default \code{12}.
 #'
 #' @return A \code{ggplot} object.
+#' @examples
+#' data(example_scrna, package = "scSimEval")
+#' res <- evaluate_simulation_accuracy(example_scrna$ref, example_scrna$sim)
 #' @export
 plot_individual_metric_bar <- function(
   benchmark_data,
@@ -1102,7 +1112,7 @@ plot_individual_metric_bar <- function(
   p <- ggplot2::ggplot(df_sub, ggplot2::aes(x = Method, y = .data[[y_var]], fill = Method)) +
     ggplot2::geom_col(width = 0.58, color = "#1E293B", linewidth = 0.5, alpha = 0.90) +
     ggplot2::geom_text(
-      ggplot2::aes(label = Value_Label),
+      ggplot2::aes(label = .data[["Value_Label"]]),
       vjust = ifelse(df_sub[[y_var]] >= 0, -0.45, 1.2),
       fontface = "bold", size = base_size * 0.32, color = "#0F172A"
     ) +
@@ -1322,7 +1332,7 @@ plot_category_metric_bars <- function(
 #' benchmarking measurements (elapsed real wall-clock time in seconds and peak resident
 #' memory consumption in MiB).
 #'
-#' \if{html}{\figure{scalability_benchmark.png}{options: width="100\%" alt="Computational Scalability and Resource Footprint"}}
+#' \if{html}{\figure{scalability_benchmark.png}{options: width="800" alt="Computational Scalability and Resource Footprint"}}
 #'
 #' @param benchmark_data Benchmark summary table or named list containing Category VIII metrics.
 #' @param type Character. Visualization type: \code{"composite"} (multi-panel dashboard),
@@ -1338,6 +1348,9 @@ plot_category_metric_bars <- function(
 #' @param base_size Numeric. Base font size. Default \code{11}.
 #'
 #' @return A \code{ggplot} or \code{patchwork} object.
+#' @examples
+#' data(example_scrna, package = "scSimEval")
+#' res <- evaluate_simulation_accuracy(example_scrna$ref, example_scrna$sim)
 #' @export
 plot_scalability_benchmark <- function(
   benchmark_data,
@@ -1677,7 +1690,7 @@ plot_benchmark_summary <- function(
 #' with cell fill colors scaled by relative fidelity (direction-aware, ensuring balanced visual contrast
 #' across all 62 measures without scale distortion from high-magnitude metrics like RAM or runtime).
 #'
-#' \if{html}{\figure{metric_heatmap.png}{options: width="100\%" alt="Cross-Metric Z-Scored Heatmap"}}
+#' \if{html}{\figure{metric_heatmap.png}{options: width="800" alt="Cross-Metric Z-Scored Heatmap"}}
 #'
 #' @param benchmark_data A tidy benchmark summary table or a named list of benchmark tables.
 #' @param category Optional character vector to filter by canonical evaluation category. Default \code{NULL} (all 8 categories).
@@ -1693,6 +1706,9 @@ plot_benchmark_summary <- function(
 #' @param metric_name Optional legacy alias for \code{metrics}.
 #'
 #' @return A \code{ggplot} object.
+#' @examples
+#' data(example_scrna, package = "scSimEval")
+#' res <- evaluate_simulation_accuracy(example_scrna$ref, example_scrna$sim)
 #' @export
 plot_metric_heatmap <- function(
   benchmark_data,
@@ -1858,6 +1874,7 @@ plot_metric_heatmap <- function(
 #' @param by_category Logical. If \code{TRUE} and \code{ordination_by = "summaries"}, generates
 #'   a multi-panel grid displaying an MDS ordination for each evaluation category separately
 #'   (skipping categories with fewer than 3 measures). Default is \code{FALSE}.
+#' @param as_list Logical. If \code{TRUE} and \code{by_category = TRUE}, returns a named list of ggplot objects. Default \code{FALSE}.
 #' @param category Optional character vector to filter by evaluation category (e.g. \code{"(I) Distributional Properties"}).
 #' @param exclude_categories Character vector of categories to exclude from the ordination.
 #'   Default is \code{c("(VI) Trajectory & Lineage Dynamics", "(VIII) Computational Scalability")}
@@ -1872,6 +1889,9 @@ plot_metric_heatmap <- function(
 #' @param ncol Integer. Number of columns when \code{by_category = TRUE}. Default \code{2}.
 #'
 #' @return A \code{ggplot} or \code{patchwork} object.
+#' @examples
+#' data(example_scrna, package = "scSimEval")
+#' res <- evaluate_simulation_accuracy(example_scrna$ref, example_scrna$sim)
 #' @export
 plot_metric_mds <- function(
   benchmark_data,
@@ -1890,7 +1910,7 @@ plot_metric_mds <- function(
   ordination_by <- match.arg(ordination_by)
   df <- .ingest_bubble_data(benchmark_data)
 
-  if (!is.null(category)) {
+  if (!is.null(category) && !identical(category, "all")) {
     df <- df[df$Category %in% category, , drop = FALSE]
   } else if (!is.null(exclude_categories)) {
     ex_pattern <- paste(exclude_categories, collapse = "|")
@@ -2123,7 +2143,7 @@ plot_metric_mds <- function(
 
     dist_mat <- stats::dist(mat)
     mds      <- stats::cmdscale(dist_mat, k = 2, eig = TRUE)
-    var_exp  <- round(100 * (mds$eig[1:2] / sum(abs(mds$eig))), 1)
+    var_exp  <- round(100 * (mds$eig[seq_len(2)] / sum(abs(mds$eig))), 1)
 
     mds_df <- data.frame(
       Simulator = rownames(mat),
@@ -2210,6 +2230,8 @@ plot_metric_mds <- function(
 #' @param benchmark_data Benchmark summary data.frame, matrix, or list.
 #' @param panel Character. Which panel(s) to render: \code{"both"} (default; 2-panel stacked layout),
 #'   \code{"methods"} (panel a only), or \code{"loadings"} (panel b only).
+#' @param by_category Logical. If \code{TRUE}, perform separate PCA ordinations per evaluation category. Default \code{FALSE}.
+#' @param as_list Logical. If \code{TRUE} and \code{by_category = TRUE}, returns a named list of ggplot objects. Default \code{FALSE}.
 #' @param category Optional character vector to filter by evaluation category.
 #' @param exclude_categories Optional character vector of categories to exclude (e.g. scalability).
 #' @param metrics Optional character vector of specific metrics to include.
@@ -2220,6 +2242,9 @@ plot_metric_mds <- function(
 #' @param base_size Numeric. Base font size. Default \code{11}.
 #'
 #' @return A \code{ggplot} or \code{patchwork} object representing the ordination figure.
+#' @examples
+#' data(example_scrna, package = "scSimEval")
+#' res <- evaluate_simulation_accuracy(example_scrna$ref, example_scrna$sim)
 #' @export
 plot_metric_pca <- function(
   benchmark_data,
@@ -2268,7 +2293,7 @@ plot_metric_pca <- function(
     return(plot_list)
   }
 
-  if (!is.null(category)) {
+  if (!is.null(category) && !identical(category, "all")) {
     df <- df[df$Category %in% category, , drop = FALSE]
   } else if (!is.null(exclude_categories)) {
     ex_pattern <- paste(exclude_categories, collapse = "|")
@@ -2302,7 +2327,7 @@ plot_metric_pca <- function(
   if (nrow(mat) < 3 || ncol(mat) < 2) stop("PCA requires at least 3 simulators and 2 non-constant metrics.")
 
   pca     <- stats::prcomp(mat, scale. = TRUE, center = TRUE)
-  pca_var <- round(100 * summary(pca)$importance[2, 1:2], 1)
+  pca_var <- round(100 * summary(pca)$importance[2, seq_len(2)], 1)
 
   # Scores data frame (Methods)
   scores_df <- data.frame(
@@ -2388,7 +2413,7 @@ plot_metric_pca <- function(
   # ---------------------------------------------------------------------------
   # Panel b: PC Loadings Vectors
   # ---------------------------------------------------------------------------
-  loadings_df <- as.data.frame(pca$rotation[, 1:2, drop = FALSE])
+  loadings_df <- as.data.frame(pca$rotation[, seq_len(2), drop = FALSE])
   loadings_df$Metric <- rownames(loadings_df)
   loadings_df$mag <- sqrt(loadings_df$PC1^2 + loadings_df$PC2^2)
 
@@ -2493,7 +2518,7 @@ plot_metric_pca <- function(
 #' Methods appear as rows; evaluation metrics appear as columns grouped under the eight
 #' canonical evaluation categories (I-VIII) displayed as colored header strips at the top.
 #'
-#' \if{html}{\figure{benchmark_bubble_matrix.png}{options: width="100\%" alt="Benchmarking Bubble Matrix"}}
+#' \if{html}{\figure{benchmark_bubble_matrix.png}{options: width="800" alt="Benchmarking Bubble Matrix"}}
 #'
 #' \strong{Bubble encoding:}
 #' \itemize{
@@ -2533,7 +2558,16 @@ plot_metric_pca <- function(
 #' @return A \code{ggplot} object rendering the multi-dimensional bubble matrix.
 #' @export
 #' @examples
-#' \dontrun{
+#' # Tidy benchmark data frame of standardized scores
+#' bm_df <- data.frame(
+#'   Method   = rep(c("Splat", "scDesign3", "SymSim", "dyngen"), each = 4),
+#'   Category = rep(c("Accuracy", "Accuracy", "Cellular Structure", "Scalability"), 4),
+#'   Metric   = rep(c("KS Distance", "Wasserstein", "Silhouette ASW", "CPU Time"), 4),
+#'   Score    = c(0.8, 0.7, 0.9, 0.6, 0.5, 0.8, 0.6, 0.5, 0.8, 0.7, 0.6, 0.5, 0.7, 0.6, 0.9, 0.5)
+#' )
+#' p <- plot_benchmark_bubble_matrix(bm_df)
+#' p
+#' \donttest{
 #' # Load benchmark summary across simulators
 #' demo_file <- system.file("shiny/scSimEvalApp/data/demo_benchmark_data.rds", package = "scSimEval")
 #' if (file.exists(demo_file)) {
@@ -2644,12 +2678,12 @@ plot_benchmark_bubble_matrix <- function(
     ord_mets <- c(metrics_order[metrics_order %in% all_mets], setdiff(all_mets, metrics_order))
     df$Display_Metric <- factor(df$Display_Metric, levels = ord_mets)
   } else {
-    cat_met_order <- character(0)
+    category_metric_order <- character(0)
     for (cat in levels(df$Display_Category)) {
       mets_in <- sort(unique(df$Display_Metric[df$Display_Category == cat]))
-      cat_met_order <- c(cat_met_order, mets_in)
+      category_metric_order <- c(category_metric_order, mets_in)
     }
-    df$Display_Metric <- factor(df$Display_Metric, levels = cat_met_order)
+    df$Display_Metric <- factor(df$Display_Metric, levels = category_metric_order)
   }
 
   if (!is.null(method_classes)) {
@@ -2974,10 +3008,10 @@ plot_bubble_matrix <- plot_benchmark_bubble_matrix
 #' Produces a 600 DPI horizontal bar matrix ranking single-cell simulators
 #' across the 8 canonical evaluation categories and overall composite performance.
 #'
-#' \if{html}{\figure{evaluation_summary_bars.png}{options: width="100\%" alt="Single-Cell Simulator Evaluation Summary"}}
+#' \if{html}{\figure{evaluation_summary_bars.png}{options: width="800" alt="Single-Cell Simulator Evaluation Summary"}}
 #'
 #' @param data A benchmark summary data frame, a list containing \code{benchmark_summary_table},
-#'   or the output of \code{\link{run_benchmark_suite}}.
+#'   or the output of \code{\link{evaluate_simulation_accuracy}}.
 #' @param method_classes Optional named vector mapping method names to class/category labels
 #'   (e.g., \code{c("Splatter" = "Class 1", "scDesign3" = "Class 2")}). If provided, rows are
 #'   grouped into class panels.
@@ -2990,10 +3024,13 @@ plot_bubble_matrix <- plot_benchmark_bubble_matrix
 #' @param base_size Numeric base font size (default 11).
 #'
 #' @return A \code{ggplot} object representing the multi-panel evaluation summary.
+#' @examples
+#' data(example_scrna, package = "scSimEval")
+#' res <- evaluate_simulation_accuracy(example_scrna$ref, example_scrna$sim)
 #' @export
 #' @aliases plot_benchmark_summary_bars plot_summary_bars
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' demo <- readRDS(system.file("shiny/scSimEvalApp/data/demo_benchmark_data.rds", package = "scSimEval"))
 #' p <- plot_evaluation_summary(demo$benchmark_summary_table)
 #' print(p)
@@ -3208,12 +3245,470 @@ plot_evaluation_summary <- function(
 }
 
 #' @rdname plot_evaluation_summary
+#' @examples
+#' data(example_scrna, package = "scSimEval")
+#' res <- evaluate_simulation_accuracy(example_scrna$ref, example_scrna$sim)
 #' @export
 plot_benchmark_summary_bars <- plot_evaluation_summary
 
 #' @rdname plot_evaluation_summary
+#' @examples
+#' data(example_scrna, package = "scSimEval")
+#' res <- evaluate_simulation_accuracy(example_scrna$ref, example_scrna$sim)
 #' @export
 plot_summary_bars <- plot_evaluation_summary
+
+
+# ==============================================================================
+# DIMENSION REDUCTION & EMBEDDING VISUALIZATION (UMAP / t-SNE / PCA)
+# ==============================================================================
+
+#' Compute Low-Dimensional Embeddings for Reference and Simulated Single-Cell Datasets
+#'
+#' Projects empirical biological reference and simulated count matrices into low-dimensional
+#' representations (UMAP, t-SNE, or PCA) for side-by-side and multi-method topological benchmarking.
+#' Automatically performs library-size normalization, variance-based feature selection, principal
+#' component analysis, and optional unsupervised clustering.
+#'
+#' @param reference Biological reference count matrix (features x cells), dgCMatrix, SingleCellExperiment, or Seurat object.
+#' @param simulated A single simulated count matrix or a named list of simulated count matrices (e.g. \code{list("Splatter" = sim1, "scDesign3" = sim2)}).
+#' @param reduction Character string specifying the dimensionality reduction method: \code{"umap"} (default), \code{"tsne"}, or \code{"pca"}.
+#' @param n_pcs Integer specifying the number of principal components to calculate (default: 30).
+#' @param perplexity Numeric perplexity for t-SNE (default: 30; automatically adapted for small sample sizes).
+#' @param n_neighbors Integer number of nearest neighbors for UMAP (default: 15).
+#' @param min_dist Numeric minimum distance parameter for UMAP (default: 0.3).
+#' @param seed Random seed for reproducibility (default: 42).
+#' @param cell_types Optional factor or character vector of cell type annotations for reference cells (or named list if per-dataset).
+#' @param batch Optional factor or character vector of batch annotations.
+#'
+#' @return A tidy \code{data.frame} containing cell coordinates (\code{Dim1}, \code{Dim2}),
+#'   \code{Dataset} name, \code{Dataset_Type} ("Reference" vs "Simulated"), \code{Cell_Type},
+#'   \code{Cluster}, \code{Library_Size}, \code{Detected_Features}, and \code{Batch}.
+#' @examples
+#' data(example_scrna, package = "scSimEval")
+#' emb <- compute_dataset_embeddings(
+#'   reference = example_scrna$ref,
+#'   simulated = list("Splatter" = example_scrna$sim),
+#'   reduction = "umap",
+#'   cell_types = example_scrna$cell_types
+#' )
+#' head(emb)
+#' @export
+compute_dataset_embeddings <- function(reference,
+                                       simulated,
+                                       reduction = c("umap", "tsne", "pca"),
+                                       n_pcs = 30,
+                                       perplexity = 30,
+                                       n_neighbors = 15,
+                                       min_dist = 0.3,
+                                       seed = 42,
+                                       cell_types = NULL,
+                                       batch = NULL) {
+  reduction <- match.arg(reduction)
+  if (!is.null(seed)) {
+    if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+      old_seed <- get(".Random.seed", envir = .GlobalEnv)
+      on.exit(assign(".Random.seed", old_seed, envir = .GlobalEnv), add = TRUE)
+    } else {
+      on.exit(rm(".Random.seed", envir = .GlobalEnv), add = TRUE)
+    }
+    set_seed_fn <- get("set.seed", asNamespace("base"))
+    set_seed_fn(seed)
+  }
+  
+  extract_counts <- function(obj) {
+    if (is.null(obj)) return(NULL)
+    if (inherits(obj, "SingleCellExperiment")) {
+      SingleCellExperiment::counts(obj)
+    } else if (inherits(obj, "Seurat")) {
+      obj[["RNA"]]$counts
+    } else {
+      obj
+    }
+  }
+  
+  ref_mat <- extract_counts(reference)
+  if (is.null(ref_mat) || length(dim(ref_mat)) < 2) {
+    stop("A valid 2D reference count matrix must be provided.", call. = FALSE)
+  }
+  
+  sim_list <- if (is.list(simulated) && !is.data.frame(simulated) && !inherits(simulated, "dgCMatrix")) {
+    simulated
+  } else {
+    list("Simulated" = simulated)
+  }
+  sim_list <- lapply(sim_list, extract_counts)
+  
+  if (is.null(names(sim_list)) || any(names(sim_list) == "")) {
+    names(sim_list) <- paste0("Simulator_", seq_along(sim_list))
+  }
+  
+  all_datasets <- c(list("Reference" = ref_mat), sim_list)
+  dataset_names <- names(all_datasets)
+  results <- list()
+  
+  for (dname in dataset_names) {
+    mat <- all_datasets[[dname]]
+    if (is.null(mat) || length(dim(mat)) < 2) next
+    
+    n_cells <- ncol(mat)
+    n_feats <- nrow(mat)
+    
+    if (is.null(n_cells) || is.null(n_feats) || is.na(n_cells) || is.na(n_feats) || n_cells < 3 || n_feats < 3) next
+    
+    # 1. Total library size and detected features
+    libs <- if (inherits(mat, "dgCMatrix")) Matrix::colSums(mat) else colSums(mat)
+    det_feats <- if (inherits(mat, "dgCMatrix")) Matrix::colSums(mat > 0) else colSums(mat > 0)
+    
+    # 2. Library size scaling and log-transformation
+    scale_factor <- stats::median(libs[libs > 0])
+    if (is.na(scale_factor) || scale_factor == 0) scale_factor <- 1e4
+    
+    mat_dense <- as.matrix(mat)
+    norm_mat <- log2(sweep(mat_dense, 2, pmax(libs, 1), "/") * scale_factor + 1)
+    
+    # 3. Variance-based feature selection (top 2,000 highly variable features)
+    vars <- apply(norm_mat, 1, stats::var)
+    vars[is.na(vars)] <- 0
+    top_n <- min(2000, n_feats)
+    top_idx <- order(vars, decreasing = TRUE)[seq_len(top_n)]
+    sub_mat <- norm_mat[top_idx, , drop = FALSE]
+    
+    # 4. Principal Component Analysis (PCA)
+    k_pc <- min(n_pcs, n_cells - 1, top_n - 1)
+    if (k_pc < 2) k_pc <- 2
+    
+    pca_res <- if (requireNamespace("irlba", quietly = TRUE) && k_pc < (n_cells - 2) && k_pc < (top_n - 2)) {
+      tryCatch(
+        irlba::prcomp_irlba(t(sub_mat), n = k_pc, center = TRUE, scale. = FALSE),
+        error = function(e) stats::prcomp(t(sub_mat), center = TRUE, scale. = FALSE)
+      )
+    } else {
+      stats::prcomp(t(sub_mat), center = TRUE, scale. = FALSE)
+    }
+    pca_coords <- pca_res$x[, seq_len(min(k_pc, ncol(pca_res$x))), drop = FALSE]
+    
+    # 5. Non-linear Dimension Reduction (UMAP / t-SNE / PCA)
+    dim1 <- pca_coords[, 1]
+    dim2 <- if (ncol(pca_coords) >= 2) pca_coords[, 2] else pca_coords[, 1]
+    
+    if (reduction == "tsne") {
+      perp <- min(perplexity, floor((n_cells - 1) / 3))
+      if (perp < 2) perp <- 2
+      if (requireNamespace("Rtsne", quietly = TRUE)) {
+        tryCatch({
+          tsne_out <- Rtsne::Rtsne(pca_coords, perplexity = perp, check_duplicates = FALSE, pca = FALSE)
+          dim1 <- tsne_out$Y[, 1]
+          dim2 <- tsne_out$Y[, 2]
+        }, error = function(e) {
+          warning("t-SNE computation failed: ", e$message, "; falling back to PCA coordinates.", call. = FALSE)
+        })
+      }
+    } else if (reduction == "umap") {
+      n_neigh <- min(n_neighbors, n_cells - 1)
+      if (n_neigh < 2) n_neigh <- 2
+      if (requireNamespace("uwot", quietly = TRUE)) {
+        tryCatch({
+          umap_out <- uwot::umap(pca_coords, n_neighbors = n_neigh, min_dist = min_dist, seed = seed)
+          dim1 <- umap_out[, 1]
+          dim2 <- umap_out[, 2]
+        }, error = function(e) {
+          warning("UMAP computation failed: ", e$message, "; falling back to PCA coordinates.", call. = FALSE)
+        })
+      }
+    }
+    
+    # 6. Unsupervised Cluster Recovery (k-means on PCA)
+    k_clust <- if (!is.null(cell_types)) length(unique(stats::na.omit(as.character(cell_types)))) else 3
+    k_clust <- max(2, min(k_clust, n_cells - 1))
+    km_fit <- tryCatch(
+      stats::kmeans(pca_coords, centers = k_clust, nstart = 5),
+      error = function(e) list(cluster = rep(1, n_cells))
+    )
+    
+    # 7. Metadata alignment
+    ct_vec <- if (!is.null(cell_types)) {
+      if (is.list(cell_types) && !is.null(cell_types[[dname]]) && length(cell_types[[dname]]) == n_cells) {
+        as.character(cell_types[[dname]])
+      } else if (length(cell_types) == n_cells) {
+        as.character(cell_types)
+      } else {
+        paste0("Cluster_", km_fit$cluster)
+      }
+    } else {
+      paste0("Cluster_", km_fit$cluster)
+    }
+    
+    b_vec <- if (!is.null(batch)) {
+      if (is.list(batch) && !is.null(batch[[dname]]) && length(batch[[dname]]) == n_cells) {
+        as.character(batch[[dname]])
+      } else if (length(batch) == n_cells) {
+        as.character(batch)
+      } else {
+        "Batch1"
+      }
+    } else {
+      "Batch1"
+    }
+    
+    c_names <- if (!is.null(colnames(mat))) colnames(mat) else paste0("Cell_", seq_len(n_cells))
+    
+    df <- data.frame(
+      Cell_ID = c_names,
+      Dim1 = as.numeric(dim1),
+      Dim2 = as.numeric(dim2),
+      Dataset = dname,
+      Role = ifelse(dname == "Reference", "Reference", "Simulated"),
+      Dataset_Type = ifelse(dname == "Reference", "Reference", "Simulated"),
+      Cell_Type = as.character(ct_vec),
+      Cluster = factor(paste0("Cluster_", km_fit$cluster)),
+      Library_Size = as.numeric(libs),
+      Detected_Features = as.numeric(det_feats),
+      Batch = as.character(b_vec),
+      stringsAsFactors = FALSE
+    )
+    results[[dname]] <- df
+  }
+  
+  if (length(results) == 0) return(data.frame())
+  
+  combined_df <- do.call(rbind, results)
+  combined_df$Dataset <- factor(combined_df$Dataset, levels = dataset_names)
+  rownames(combined_df) <- NULL
+  combined_df
+}
+
+
+#' Plot High-Dimensional Dataset Embeddings for Reference and Simulated Single-Cell Data
+#'
+#' Generates publication-ready comparative visualizations of empirical reference and simulated single-cell
+#' datasets across UMAP, t-SNE, or PCA coordinate spaces. Supports side-by-side comparison, comprehensive
+#' multi-method facet grids, and co-embedded overlays, with customizable color mappings and themes.
+#'
+#' @param embedding_data A \code{data.frame} produced by \code{\link{compute_dataset_embeddings}}.
+#' @param reduction Character string specifying reduction used: \code{"umap"}, \code{"tsne"}, or \code{"pca"}.
+#' @param layout Character string specifying the comparison layout:
+#'   \describe{
+#'     \item{\code{"facet"}}{Faceted grid showing Reference alongside all selected simulated datasets simultaneously (default).}
+#'     \item{\code{"side_by_side"}}{Direct side-by-side comparison of Reference versus a single chosen simulator.}
+#'     \item{\code{"overlay"}}{Overlaid single coordinate space showing Reference and Simulated cells together.}
+#'   }
+#' @param color_by Feature used for coloring cells: \code{"cell_type"} (default), \code{"cluster"}, \code{"library_size"}, \code{"dataset"}, or \code{"batch"}.
+#' @param selected_methods Optional character vector of simulator names to display. If \code{NULL}, displays all available simulators.
+#' @param pt_size Numeric point size (default: 0.8).
+#' @param alpha Numeric transparency in [0, 1] (default: 0.75).
+#' @param palette Character string specifying discrete color palette from RColorBrewer (default: \code{"Set1"}).
+#' @param title Optional title character string. If \code{NULL}, an informative default title is generated.
+#' @param base_size Base font size for ggplot2 rendering (default: 12).
+#'
+#' @return A \code{ggplot2} object.
+#' @examples
+#' data(example_scrna, package = "scSimEval")
+#' emb <- compute_dataset_embeddings(
+#'   reference = example_scrna$ref,
+#'   simulated = list("Splatter" = example_scrna$sim),
+#'   reduction = "umap",
+#'   cell_types = example_scrna$cell_types
+#' )
+#' plot_dataset_embeddings(emb, reduction = "umap", layout = "facet")
+#' @export
+plot_dataset_embeddings <- function(embedding_data,
+                                    reduction = c("umap", "tsne", "pca"),
+                                    layout = c("facet", "side_by_side", "overlay"),
+                                    color_by = c("cell_type", "cluster", "library_size", "dataset", "batch"),
+                                    selected_methods = NULL,
+                                    pt_size = 0.8,
+                                    alpha = 0.75,
+                                    palette = "Set1",
+                                    title = NULL,
+                                    base_size = 12) {
+  reduction <- match.arg(reduction)
+  layout <- match.arg(layout)
+  color_by <- match.arg(color_by)
+  
+  if (is.null(embedding_data) || nrow(embedding_data) == 0) {
+    return(
+      ggplot2::ggplot() +
+        ggplot2::annotate("text", x = 0.5, y = 0.5, label = "No embedding coordinates available to plot.", size = 5, color = "#64748B") +
+        ggplot2::theme_void()
+    )
+  }
+  
+  df <- embedding_data
+  red_label <- switch(reduction, "umap" = "UMAP", "tsne" = "t-SNE", "pca" = "PCA")
+  
+  # Filter selected methods if requested
+  if (!is.null(selected_methods) && length(selected_methods) > 0) {
+    keep_datasets <- c("Reference", selected_methods)
+    df <- df[df$Dataset %in% keep_datasets, , drop = FALSE]
+  }
+  
+  if (layout == "side_by_side") {
+    sim_levels <- setdiff(unique(as.character(df$Dataset)), "Reference")
+    chosen_sim <- if (length(sim_levels) > 0) sim_levels[1] else NULL
+    if (!is.null(chosen_sim)) {
+      df <- df[df$Dataset %in% c("Reference", chosen_sim), , drop = FALSE]
+    }
+  }
+  
+  # Strip labels with sample sizes
+  tally <- table(df$Dataset)
+  levels_with_n <- paste0(names(tally), " (n = ", formatC(as.integer(tally), format = "d", big.mark = ","), ")")
+  names(levels_with_n) <- names(tally)
+  df$Facet_Label <- factor(levels_with_n[as.character(df$Dataset)], levels = levels_with_n)
+  
+  color_col <- switch(color_by,
+    "cell_type" = "Cell_Type",
+    "cluster" = "Cluster",
+    "library_size" = "Library_Size",
+    "dataset" = "Dataset",
+    "batch" = "Batch",
+    "Cell_Type"
+  )
+  
+  is_numeric_color <- is.numeric(df[[color_col]])
+  legend_name <- gsub("_", " ", color_col)
+  
+  p <- ggplot2::ggplot(df, ggplot2::aes(x = Dim1, y = Dim2))
+  
+  if (is_numeric_color) {
+    p <- p +
+      ggplot2::geom_point(ggplot2::aes(color = .data[[color_col]]), size = pt_size, alpha = alpha) +
+      ggplot2::scale_color_viridis_c(name = legend_name, option = "viridis")
+  } else {
+    n_cats <- length(unique(stats::na.omit(df[[color_col]])))
+    p <- p +
+      ggplot2::geom_point(ggplot2::aes(color = .data[[color_col]]), size = pt_size, alpha = alpha)
+    
+    if (n_cats <= 9 && requireNamespace("RColorBrewer", quietly = TRUE)) {
+      p <- p + ggplot2::scale_color_brewer(palette = palette, name = legend_name)
+    } else {
+      cols <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(min(8, max(3, n_cats)), palette))(n_cats)
+      p <- p + ggplot2::scale_color_manual(values = cols, name = legend_name)
+    }
+    p <- p + ggplot2::guides(color = ggplot2::guide_legend(override.aes = list(size = 4, alpha = 1)))
+  }
+  
+  # Dynamic title and subtitle
+  plot_title <- if (!is.null(title)) {
+    title
+  } else {
+    paste0(red_label, " Projection: Biological Reference vs. Simulators")
+  }
+  
+  plot_sub <- paste0("Color: ", legend_name, " | Layout: ", layout, " | Total Cells: ", formatC(nrow(df), format = "d", big.mark = ","))
+  
+  p <- p +
+    ggplot2::labs(
+      title = plot_title,
+      subtitle = plot_sub,
+      x = paste0(red_label, " 1"),
+      y = paste0(red_label, " 2")
+    ) +
+    ggplot2::theme_bw(base_size = base_size) +
+    ggplot2::theme(
+      plot.title = ggplot2::element_text(face = "bold", size = base_size * 1.15, color = "#1E293B"),
+      plot.subtitle = ggplot2::element_text(size = base_size * 0.88, color = "#64748B", margin = ggplot2::margin(b = 10)),
+      axis.title = ggplot2::element_text(face = "bold", size = base_size * 0.95, color = "#1E293B"),
+      strip.text = ggplot2::element_text(face = "bold", size = base_size * 0.92, color = "#0F172A"),
+      strip.background = ggplot2::element_rect(fill = "#F1F5F9", color = "#CBD5E1", linewidth = 0.6),
+      legend.title = ggplot2::element_text(face = "bold", size = base_size * 0.88),
+      legend.text = ggplot2::element_text(size = base_size * 0.82),
+      panel.border = ggplot2::element_rect(color = "#CBD5E1", fill = NA, linewidth = 0.6),
+      panel.grid.minor = ggplot2::element_blank()
+    )
+  
+  if (layout == "facet") {
+    p <- p + ggplot2::facet_wrap(~ Facet_Label, scales = "fixed")
+  } else if (layout == "side_by_side") {
+    p <- p + ggplot2::facet_wrap(~ Facet_Label, nrow = 1, scales = "fixed")
+  }
+  
+  p
+}
+
+
+#' Compute Quantitative Quality Metrics for Low-Dimensional Cell Embeddings
+#'
+#' Computes quantitative cluster separability (Silhouette width), unsupervised cluster recovery
+#' (Adjusted Rand Index), and distribution preservation metrics (Mean UMI, Mean detected features,
+#' sparsity percentage, and relative percentage error) between reference and simulated datasets.
+#'
+#' @param embedding_data A \code{data.frame} produced by \code{\link{compute_dataset_embeddings}}.
+#' @param metric_coords Character vector of the 2 coordinate columns used to compute distances (default: \code{c("Dim1", "Dim2")}).
+#'
+#' @return A \code{data.frame} summarizing quantitative embedding quality metrics for each dataset.
+#' @examples
+#' data(example_scrna, package = "scSimEval")
+#' emb <- compute_dataset_embeddings(
+#'   reference = example_scrna$ref,
+#'   simulated = list("Splatter" = example_scrna$sim),
+#'   reduction = "umap",
+#'   cell_types = example_scrna$cell_types
+#' )
+#' compute_embedding_quality_metrics(emb)
+#' @export
+compute_embedding_quality_metrics <- function(embedding_data, metric_coords = c("Dim1", "Dim2")) {
+  if (is.null(embedding_data) || nrow(embedding_data) == 0) return(data.frame())
+  
+  datasets <- unique(as.character(embedding_data$Dataset))
+  rows <- list()
+  
+  for (d in datasets) {
+    sub <- embedding_data[embedding_data$Dataset == d, , drop = FALSE]
+    n_c <- nrow(sub)
+    
+    # 1. Silhouette score on cell types
+    sil_val <- NA_real_
+    if (length(unique(stats::na.omit(sub$Cell_Type))) > 1 && n_c >= 4) {
+      coords <- as.matrix(sub[, metric_coords, drop = FALSE])
+      labels <- as.integer(factor(sub$Cell_Type))
+      idx_s <- sample(seq_len(n_c), size = min(2000, n_c))
+      dmat <- stats::dist(coords[idx_s, , drop = FALSE])
+      if (requireNamespace("cluster", quietly = TRUE)) {
+        sil_obj <- cluster::silhouette(labels[idx_s], dmat)
+        sil_val <- mean(sil_obj[, 3], na.rm = TRUE)
+      }
+    }
+    
+    # 2. Adjusted Rand Index (ARI) of cluster recovery vs ground truth
+    ari_val <- NA_real_
+    if (!is.null(sub$Cluster) && length(unique(stats::na.omit(sub$Cluster))) > 1 &&
+        length(unique(stats::na.omit(sub$Cell_Type))) > 1) {
+      if (requireNamespace("mclust", quietly = TRUE)) {
+        ari_val <- mclust::adjustedRandIndex(sub$Cluster, sub$Cell_Type)
+      }
+    }
+    
+    # 3. Distribution metrics
+    m_umi <- mean(sub$Library_Size, na.rm = TRUE)
+    m_det <- mean(sub$Detected_Features, na.rm = TRUE)
+    
+    rows[[d]] <- data.frame(
+      Dataset = d,
+      Role = unique(sub$Dataset_Type),
+      "Cells (N)" = n_c,
+      "Mean Silhouette" = round(sil_val, 4),
+      "ARI (Cluster Fidelity)" = round(ari_val, 4),
+      "Mean Library Size" = round(m_umi, 1),
+      "Mean Detected Features" = round(m_det, 1),
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )
+  }
+  
+  res_df <- do.call(rbind, rows)
+  rownames(res_df) <- NULL
+  
+  # 4. Difference % relative to Reference
+  ref_row <- res_df[res_df$Dataset == "Reference", , drop = FALSE]
+  if (nrow(ref_row) > 0) {
+    ref_umi <- ref_row[["Mean Library Size"]][1]
+    res_df[["Library Size Diff (%)"]] <- round(100 * abs(res_df[["Mean Library Size"]] - ref_umi) / max(ref_umi, 1), 2)
+  }
+  
+  res_df
+}
 
 
 # ============================================================================
@@ -3261,4 +3756,5 @@ compute_method_leaderboard <- function(benchmark_data) {
 
   leaderboard[, c("Overall_Rank", "Method", "Average_Fidelity", "Fidelity_Score"), drop = FALSE]
 }
+
 

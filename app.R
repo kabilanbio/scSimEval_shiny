@@ -99,29 +99,47 @@ standardize_benchmark_categories <- function(df) {
 # ==============================================================================
 # Helper Functions: Robust Matrix and Label Reading
 # ==============================================================================
+as_sparse_or_matrix <- function(m) {
+  if (is.null(m)) return(NULL)
+  if (inherits(m, "sparseMatrix")) return(m)
+  if (is.data.frame(m)) m <- as.matrix(m)
+  if (is.matrix(m)) {
+    n_tot <- as.numeric(nrow(m)) * as.numeric(ncol(m))
+    if (n_tot > 50000) {
+      s_idx <- sample.int(n_tot, min(10000, n_tot))
+      if (mean(m[s_idx] == 0, na.rm = TRUE) > 0.3) {
+        return(Matrix::Matrix(m, sparse = TRUE))
+      }
+    }
+  }
+  m
+}
+
 read_uploaded_matrix <- function(file_path, file_name) {
   if (is.null(file_path) || !file.exists(file_path)) return(NULL)
   ext <- tolower(tools::file_ext(file_name))
   
   if (ext == "rds") {
     obj <- readRDS(file_path)
-    if (is.matrix(obj) || inherits(obj, "Matrix") || is.data.frame(obj)) {
-      return(as.matrix(obj))
+    if (inherits(obj, "sparseMatrix")) {
+      return(obj)
+    } else if (is.matrix(obj) || is.data.frame(obj)) {
+      return(as_sparse_or_matrix(obj))
     } else if (inherits(obj, "SingleCellExperiment") && requireNamespace("SingleCellExperiment", quietly = TRUE)) {
-      return(as.matrix(SingleCellExperiment::counts(obj)))
+      return(as_sparse_or_matrix(SingleCellExperiment::counts(obj)))
     } else if (inherits(obj, "Seurat") && requireNamespace("Seurat", quietly = TRUE)) {
-      return(as.matrix(Seurat::GetAssayData(obj, slot = "counts")))
-    } else if (is.list(obj) && length(obj) > 0 && (is.matrix(obj[[1]]) || is.data.frame(obj[[1]]))) {
-      return(as.matrix(obj[[1]]))
+      return(as_sparse_or_matrix(Seurat::GetAssayData(obj, slot = "counts")))
+    } else if (is.list(obj) && length(obj) > 0 && (is.matrix(obj[[1]]) || inherits(obj[[1]], "Matrix") || is.data.frame(obj[[1]]))) {
+      return(as_sparse_or_matrix(obj[[1]]))
     } else {
       stop("Unsupported RDS format. Please provide a count matrix or data.frame.")
     }
   } else if (ext == "csv") {
     df <- utils::read.csv(file_path, row.names = 1, check.names = FALSE)
-    return(as.matrix(df))
+    return(as_sparse_or_matrix(df))
   } else if (ext %in% c("tsv", "txt")) {
     df <- utils::read.table(file_path, sep = "\t", header = TRUE, row.names = 1, check.names = FALSE)
-    return(as.matrix(df))
+    return(as_sparse_or_matrix(df))
   } else {
     stop(paste("Unsupported file format:", ext))
   }
@@ -159,10 +177,10 @@ extract_dataset_summary <- function(mat, role = "Biological Reference", method_n
   if (is.null(n_cells) || is.null(n_feats) || n_cells == 0 || n_feats == 0) return(NULL)
   
   # Sparsity
-  sparsity_pct <- if (inherits(mat, "dgCMatrix")) {
-    (1 - (length(mat@x) / (as.numeric(n_cells) * as.numeric(n_feats)))) * 100
+  sparsity_pct <- if (inherits(mat, "sparseMatrix")) {
+    (1 - (Matrix::nnzero(mat) / (as.numeric(n_cells) * as.numeric(n_feats)))) * 100
   } else {
-    mean(mat == 0, na.rm = TRUE) * 100
+    (sum(mat == 0) / (as.numeric(n_cells) * as.numeric(n_feats))) * 100
   }
   
   # Cell Types / Biological Groups
@@ -188,9 +206,13 @@ extract_dataset_summary <- function(mat, role = "Biological Reference", method_n
   # Library size & detected features
   col_s <- if (inherits(mat, "Matrix")) Matrix::colSums(mat) else colSums(mat, na.rm = TRUE)
   med_lib <- stats::median(col_s, na.rm = TRUE)
-  col_det <- if (inherits(mat, "dgCMatrix")) diff(mat@p) else colSums(mat > 0, na.rm = TRUE)
+  col_det <- if (inherits(mat, "dgCMatrix")) diff(mat@p) else if (inherits(mat, "sparseMatrix")) Matrix::colSums(mat > 0) else colSums(mat > 0, na.rm = TRUE)
   med_det <- stats::median(col_det, na.rm = TRUE)
-  mean_expr <- if (inherits(mat, "Matrix")) mean(mat@x, na.rm = TRUE) else mean(mat, na.rm = TRUE)
+  mean_expr <- if (inherits(mat, "sparseMatrix")) {
+    sum(mat) / (as.numeric(n_cells) * as.numeric(n_feats))
+  } else {
+    mean(mat, na.rm = TRUE)
+  }
   
   data.frame(
     "Dataset / Simulator" = method_name,
@@ -314,35 +336,47 @@ compute_dataset_embeddings <- function(reference,
     if (is.null(n_cells) || is.null(n_feats) || is.na(n_cells) || is.na(n_feats) || n_cells < 3 || n_feats < 3) next
     
     # 1. Total library size and detected features
-    libs <- if (inherits(mat, "dgCMatrix")) Matrix::colSums(mat) else colSums(mat)
-    det_feats <- if (inherits(mat, "dgCMatrix")) Matrix::colSums(mat > 0) else colSums(mat > 0)
+    libs <- if (inherits(mat, "sparseMatrix")) Matrix::colSums(mat) else colSums(mat)
+    det_feats <- if (inherits(mat, "dgCMatrix")) diff(mat@p) else if (inherits(mat, "sparseMatrix")) Matrix::colSums(mat > 0) else colSums(mat > 0)
     
-    # 2. Library size scaling and log-transformation
+    # 2. Fast Variance-based feature selection (prioritize top 2,000 HVGs BEFORE full densification)
+    top_n <- min(2000, n_feats)
+    if (n_feats > top_n) {
+      feat_vars <- if (exists("fast_row_vars", mode = "function")) {
+        fast_row_vars(mat)
+      } else if (inherits(mat, "dgCMatrix")) {
+        n_c <- ncol(mat)
+        rm <- Matrix::rowMeans(mat)
+        m2 <- mat; m2@x <- m2@x^2
+        v <- (Matrix::rowMeans(m2) - rm^2) * (n_c / (n_c - 1))
+        pmax(0, as.numeric(v))
+      } else {
+        apply(mat, 1, stats::var)
+      }
+      feat_vars[is.na(feat_vars)] <- 0
+      top_idx <- order(feat_vars, decreasing = TRUE)[seq_len(top_n)]
+      mat_sub <- mat[top_idx, , drop = FALSE]
+    } else {
+      mat_sub <- mat
+    }
+    
+    # 3. Library size scaling and log-transformation on top features only (drastically reduces RAM and runtime)
     scale_factor <- stats::median(libs[libs > 0])
     if (is.na(scale_factor) || scale_factor <= 0) scale_factor <- 10000
     
-    norm_mat <- if (inherits(mat, "dgCMatrix")) {
-      mat_dense <- as.matrix(mat)
-      log1p(sweep(mat_dense, 2, libs / scale_factor, "/"))
-    } else {
-      log1p(sweep(as.matrix(mat), 2, libs / scale_factor, "/"))
-    }
-    norm_mat[is.na(norm_mat) | is.infinite(norm_mat)] <- 0
-    
-    # 3. Variance-based feature selection
-    vars <- apply(norm_mat, 1, stats::var)
-    vars[is.na(vars)] <- 0
-    top_n <- min(2000, n_feats)
-    top_idx <- order(vars, decreasing = TRUE)[seq_len(top_n)]
-    sub_mat <- norm_mat[top_idx, , drop = FALSE]
+    sub_dense <- as.matrix(mat_sub)
+    sub_mat <- log1p(sweep(sub_dense, 2, libs / scale_factor, "/"))
+    sub_mat[is.na(sub_mat) | is.infinite(sub_mat)] <- 0
     
     # 4. Principal Component Analysis (PCA)
-    k_pc <- min(n_pcs, n_cells - 1, top_n - 1)
+    k_pc <- min(n_pcs, n_cells - 1, nrow(sub_mat) - 1)
     if (k_pc < 2) k_pc <- 2
     
-    pca_res <- if (requireNamespace("irlba", quietly = TRUE) && k_pc < (n_cells - 2) && k_pc < (top_n - 2)) {
+    pca_res <- if (exists("fast_pca", mode = "function")) {
+      list(x = fast_pca(t(sub_mat), n_pcs = k_pc, scale = FALSE))
+    } else if (requireNamespace("irlba", quietly = TRUE) && k_pc < (n_cells - 2) && k_pc < 0.5 * min(n_cells, nrow(sub_mat))) {
       tryCatch(
-        irlba::prcomp_irlba(t(sub_mat), n = k_pc, center = TRUE, scale. = FALSE),
+        suppressWarnings(irlba::prcomp_irlba(t(sub_mat), n = k_pc, center = TRUE, scale. = FALSE)),
         error = function(e) stats::prcomp(t(sub_mat), center = TRUE, scale. = FALSE)
       )
     } else {
@@ -2892,12 +2926,14 @@ server <- function(input, output, session) {
     tryCatch({
       mat <- read_uploaded_matrix(input$file_uni_ref$datapath, input$file_uni_ref$name)
       if (!is.null(mat)) {
+        nc <- ncol(mat); nr <- nrow(mat)
+        sp_pct <- if (inherits(mat, "sparseMatrix")) (1 - (Matrix::nnzero(mat) / (as.numeric(nc) * as.numeric(nr)))) * 100 else (sum(mat == 0) / (as.numeric(nc) * as.numeric(nr))) * 100
         div(class = "alert alert-light py-2 px-3 mb-2 border", style = "font-size: 0.82rem; background: #F8FAFC;",
             tags$b(icon("check-circle", class = "text-success"), " Uploaded Reference: "),
             sprintf("%s cells × %s features (Sparsity: %.1f%%)",
-                    formatC(ncol(mat), format = "d", big.mark = ","),
-                    formatC(nrow(mat), format = "d", big.mark = ","),
-                    mean(mat == 0, na.rm = TRUE) * 100))
+                    formatC(nc, format = "d", big.mark = ","),
+                    formatC(nr, format = "d", big.mark = ","),
+                    sp_pct))
       }
     }, error = function(e) NULL)
   })
@@ -2907,12 +2943,14 @@ server <- function(input, output, session) {
     tryCatch({
       mat <- read_uploaded_matrix(input$file_multi_ref_rna$datapath, input$file_multi_ref_rna$name)
       if (!is.null(mat)) {
+        nc <- ncol(mat); nr <- nrow(mat)
+        sp_pct <- if (inherits(mat, "sparseMatrix")) (1 - (Matrix::nnzero(mat) / (as.numeric(nc) * as.numeric(nr)))) * 100 else (sum(mat == 0) / (as.numeric(nc) * as.numeric(nr))) * 100
         div(class = "alert alert-light py-2 px-3 mb-2 border", style = "font-size: 0.82rem; background: #F8FAFC;",
             tags$b(icon("check-circle", class = "text-success"), " Uploaded RNA: "),
             sprintf("%s cells × %s genes (Sparsity: %.1f%%)",
-                    formatC(ncol(mat), format = "d", big.mark = ","),
-                    formatC(nrow(mat), format = "d", big.mark = ","),
-                    mean(mat == 0, na.rm = TRUE) * 100))
+                    formatC(nc, format = "d", big.mark = ","),
+                    formatC(nr, format = "d", big.mark = ","),
+                    sp_pct))
       }
     }, error = function(e) NULL)
   })
@@ -2922,16 +2960,17 @@ server <- function(input, output, session) {
     tryCatch({
       mat <- read_uploaded_matrix(input$file_multi_ref_atac$datapath, input$file_multi_ref_atac$name)
       if (!is.null(mat)) {
+        nc <- ncol(mat); nr <- nrow(mat)
+        sp_pct <- if (inherits(mat, "sparseMatrix")) (1 - (Matrix::nnzero(mat) / (as.numeric(nc) * as.numeric(nr)))) * 100 else (sum(mat == 0) / (as.numeric(nc) * as.numeric(nr))) * 100
         div(class = "alert alert-light py-2 px-3 mb-2 border", style = "font-size: 0.82rem; background: #F8FAFC;",
             tags$b(icon("check-circle", class = "text-success"), " Uploaded ATAC: "),
             sprintf("%s cells × %s peaks (Sparsity: %.1f%%)",
-                    formatC(ncol(mat), format = "d", big.mark = ","),
-                    formatC(nrow(mat), format = "d", big.mark = ","),
-                    mean(mat == 0, na.rm = TRUE) * 100))
+                    formatC(nc, format = "d", big.mark = ","),
+                    formatC(nr, format = "d", big.mark = ","),
+                    sp_pct))
       }
     }, error = function(e) NULL)
   })
-  
   output$ui_dataset_summary_download_btn <- renderUI({
     if (!is.null(rv$dataset_summary_df) && nrow(rv$dataset_summary_df) > 0) {
       downloadButton("download_dataset_summary_csv", "Export Properties (CSV)", class = "btn btn-sm btn-outline-secondary", icon = icon("file-csv"))
