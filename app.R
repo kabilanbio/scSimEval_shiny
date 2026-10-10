@@ -3012,8 +3012,12 @@ server <- function(input, output, session) {
   
   output$table_dataset_summary <- renderDT({
     req(rv$dataset_summary_df)
-    datatable(
-      rv$dataset_summary_df,
+    df <- rv$dataset_summary_df
+    bold_cols <- intersect(c("Dataset / Simulator", "Dataset", "Role", "Modality"), colnames(df))
+    mono_cols <- intersect(c("Cells (N)", "Features (P)", "Sparsity", "Cell Types (Groups)", "Batches", "Median Lib Size", "Median Detected Features", "Mean Expression"), colnames(df))
+    
+    dt <- datatable(
+      df,
       options = list(
         pageLength = 10,
         scrollX = TRUE,
@@ -3022,15 +3026,14 @@ server <- function(input, output, session) {
       ),
       rownames = FALSE,
       class = "compact stripe hover border"
-    ) %>%
-      formatStyle(
-        columns = c("Role", "Dataset"),
-        fontWeight = "bold"
-      ) %>%
-      formatStyle(
-        columns = c("Cells (N)", "Features (P)", "Sparsity", "Cell Types (Groups)", "Batches"),
-        fontFamily = "monospace"
-      )
+    )
+    if (length(bold_cols) > 0) {
+      dt <- dt %>% formatStyle(columns = bold_cols, fontWeight = "bold")
+    }
+    if (length(mono_cols) > 0) {
+      dt <- dt %>% formatStyle(columns = mono_cols, fontFamily = "monospace")
+    }
+    dt
   })
   
   output$download_dataset_summary_csv <- downloadHandler(
