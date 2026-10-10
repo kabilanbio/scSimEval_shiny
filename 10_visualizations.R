@@ -1895,7 +1895,7 @@ plot_metric_heatmap <- function(
 #' @export
 plot_metric_mds <- function(
   benchmark_data,
-  ordination_by      = c("summaries", "simulators"),
+  ordination_by      = c("simulators", "summaries"),
   by_category        = FALSE,
   as_list            = FALSE,
   category           = NULL,
@@ -1907,7 +1907,18 @@ plot_metric_mds <- function(
   base_size          = 11,
   ncol               = 2
 ) {
-  ordination_by <- match.arg(ordination_by)
+  if (is.null(ordination_by) || length(ordination_by) == 0) {
+    ordination_by <- "simulators"
+  } else {
+    ord_val <- tolower(as.character(ordination_by[1]))
+    if (ord_val %in% c("methods", "simulators")) {
+      ordination_by <- "simulators"
+    } else if (ord_val %in% c("metrics", "summaries")) {
+      ordination_by <- "summaries"
+    } else {
+      ordination_by <- match.arg(ordination_by, c("simulators", "summaries"))
+    }
+  }
   df <- .ingest_bubble_data(benchmark_data)
 
   if (!is.null(category) && !identical(category, "all")) {

@@ -1672,7 +1672,7 @@ ui <- page_navbar(
                        selected = "all"
                      )
               ),
-              column(3, selectInput("sel_mds_by", "Compare By:", choices = c("By Simulators" = "methods", "By Metric Summaries" = "metrics"), selected = "methods")),
+              column(3, selectInput("sel_mds_by", "Compare By:", choices = c("By Simulators" = "simulators", "By Metric Summaries" = "summaries"), selected = "simulators")),
               column(3,
                      sliderInput("sld_mds_height", "MDS Height (px):", min = 400, max = 1300, value = 620, step = 20)
               ),
@@ -4484,12 +4484,10 @@ server <- function(input, output, session) {
     rv_plot_triggers$mds
     withProgress(message = "Computing MDS Metric Space", detail = "Calculating Euclidean distance coordinates...", {
       cat_sel <- if (identical(input$sel_mds_cat, "all")) NULL else input$sel_mds_cat
-      ord_by <- if (!is.null(input$sel_mds_by) && input$sel_mds_by %in% c("methods", "metrics")) {
-        input$sel_mds_by
-      } else if (identical(input$sel_mds_by, "summaries")) {
-        "metrics"
+      ord_by <- if (!is.null(input$sel_mds_by) && input$sel_mds_by %in% c("summaries", "metrics")) {
+        "summaries"
       } else {
-        "methods"
+        "simulators"
       }
       plot_metric_mds(
         benchmark_data = rv$benchmark_df,
