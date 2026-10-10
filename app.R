@@ -1123,6 +1123,7 @@ ui <- page_navbar(
       uiOutput("ui_datahub_main_panel")
     )
   ),
+  # ============================================================================
   # TAB 3: COMPARATIVE BUBBLE MATRIX (FLAGSHIP FIGURE)
   # ============================================================================
   nav_panel(
@@ -1130,9 +1131,9 @@ ui <- page_navbar(
     layout_sidebar(
       sidebar = sidebar(
         width = 330,
-        title = div(icon("sliders"), " Display & Filters"),
+        title = div(icon("sliders", class = "me-2 text-primary"), tags$strong("Display & Filters")),
         
-        # 1. Two Top-Level Filter Options (Minimalist & Direct)
+        # 1. Filter Mode (Minimalist & Direct)
         radioButtons(
           "rad_bubble_filter_mode", tags$b("Filter Mode:"),
           choices = c(
@@ -1142,7 +1143,7 @@ ui <- page_navbar(
           selected = "all"
         ),
         
-        # 2. User-Friendly Custom Selection Panel (Only visible when 'custom' is active)
+        # 2. Custom Selection Panel (Only visible when "custom" is active)
         conditionalPanel(
           condition = "input.rad_bubble_filter_mode == 'custom'",
           div(
@@ -1174,7 +1175,7 @@ ui <- page_navbar(
         
         hr(style = "margin: 10px 0;"),
         
-        # 4. Collapsible Dimension Sliders (Hidden by default to avoid visual clutter)
+        # 4. Collapsible Dimension Sliders
         accordion(
           open = FALSE,
           accordion_panel(
@@ -1207,12 +1208,12 @@ ui <- page_navbar(
             card_header(
               div(
                 class = "d-flex justify-content-between align-items-center",
-                span("Comparative Simulation Fidelity Bubble Matrix"),
+                span(icon("chart-dot", class = "me-2 text-primary"), tags$b("Comparative Simulation Fidelity Bubble Matrix")),
                 uiOutput("ui_bubble_active_badge")
               )
             ),
             card_body(
-              p("Each column represents a simulator method; each row represents a curated evaluation metric. Bubble size reflects standardized fidelity (larger bubbles = higher fidelity to reference). Color indicates biological category.", style = "font-size: 0.9rem; color: #555;"),
+              p("Columns denote evaluated simulator methods; rows denote curated evaluation metrics. Bubble size scales with standardized fidelity [0, 1] relative to empirical reference. Colors indicate canonical biological and computational categories.", style = "font-size: 0.84rem; color: #64748B; margin-bottom: 12px;"),
               div(
                 class = "bubble-scroll-container",
                 uiOutput("ui_bubble_plot_render")
@@ -1221,21 +1222,19 @@ ui <- page_navbar(
           )
         ),
         
-        # Subtab 2: Fidelity Leaderboard (Right After Figure)
+        # Subtab 2: Fidelity Leaderboard
         nav_panel(
           "Fidelity Leaderboard",
           card(
             card_header(
               class = "d-flex justify-content-between align-items-center py-2",
-              tags$span(tags$b("Accurate Benchmark Results: Overall Simulator Fidelity Leaderboard")),
+              tags$span(icon("ranking-star", class = "me-2 text-primary"), tags$b("Simulator Fidelity Leaderboard")),
               downloadButton("download_leaderboard_csv", "Download Leaderboard (CSV)", class = "btn btn-sm btn-outline-primary")
             ),
             card_body(
               p(
-                "Overall simulator rankings computed across all 62 curated benchmark measures. ",
-                "Metrics are direction-inverted (so lower error, runtime, and memory are recognized as superior) ",
-                "and min-max standardized into fidelity scores in [0.00, 1.00] (higher % represents superior agreement with empirical reference):",
-                style = "font-size: 0.88rem; color: #555; margin-bottom: 10px;"
+                "Overall simulator rankings synthesized across canonical benchmark criteria. All measures are direction-inverted (error, runtime, and memory scaled so lower is superior) and normalized into [0.00, 1.00]:",
+                style = "font-size: 0.84rem; color: #64748B; margin-bottom: 12px;"
               ),
               DTOutput("table_leaderboard_dt")
             )
@@ -1246,7 +1245,7 @@ ui <- page_navbar(
   ),
   
   # ============================================================================
-  # TAB 4: DIAGNOSTIC VISUALIZATIONS (ALL 7 PANELS IN 1 ROW)
+  # TAB 4: DIAGNOSTIC VISUALIZATIONS (8 CURATED SUB-PANELS)
   # ============================================================================
   nav_panel(
     "Visualizations",
@@ -1257,7 +1256,13 @@ ui <- page_navbar(
       nav_panel(
         "1. Evaluation Summary",
         card(
-          card_header("Overall Category Evaluation Summary (plot_evaluation_summary)"),
+          card_header(
+            div(
+              class = "d-flex justify-content-between align-items-center",
+              span(icon("chart-pie", class = "me-2 text-primary"), tags$b("Category Evaluation Summary")),
+              span(class = "badge bg-light text-secondary border", "Radar & Bar Summary")
+            )
+          ),
           card_body(
             fluidRow(
               column(4, checkboxInput("chk_sum_labels", "Show Score Labels", value = TRUE)),
@@ -1277,11 +1282,17 @@ ui <- page_navbar(
       nav_panel(
         "2. Distribution QC",
         card(
-          card_header("Empirical vs Simulated Distribution Quality (plot_distribution_qc)"),
+          card_header(
+            div(
+              class = "d-flex justify-content-between align-items-center",
+              span(icon("chart-line", class = "me-2 text-primary"), tags$b("Empirical vs Simulated Distribution Quality")),
+              span(class = "badge bg-light text-secondary border", "Density QC")
+            )
+          ),
           card_body(
             fluidRow(
               column(4, selectInput("sel_dist_layout", "QC Layout:", choices = c("Comprehensive" = "comprehensive", "Density Curves Only" = "density"), selected = "comprehensive")),
-              column(4, p("Compares expression densities, library sizes, and zero-inflation between real reference and simulated cells.", style = "font-size: 0.85rem; color: #666;")),
+              column(4, p("Compares expression densities, library sizes, and zero-inflation between real reference and simulated cells.", style = "font-size: 0.82rem; color: #64748B; margin-bottom: 0;")),
               column(4,
                      downloadButton("download_dist_jpeg", "Download JPEG (600 DPI)", class = "btn btn-sm btn-primary me-2"),
                      downloadButton("download_dist_pdf", "Download PDF", class = "btn btn-sm btn-outline-secondary")
@@ -1297,7 +1308,13 @@ ui <- page_navbar(
       nav_panel(
         "3. Scalability Benchmark",
         card(
-          card_header("Computational Scalability Benchmark (plot_scalability_benchmark)"),
+          card_header(
+            div(
+              class = "d-flex justify-content-between align-items-center",
+              span(icon("microchip", class = "me-2 text-primary"), tags$b("Computational Scalability Benchmark")),
+              span(class = "badge bg-light text-secondary border", "Runtime & RAM")
+            )
+          ),
           card_body(
             fluidRow(
               column(6,
@@ -1329,7 +1346,13 @@ ui <- page_navbar(
         "4. Metric Plots",
         card(
           fill = FALSE,
-          card_header("Metric Plots: Category Distributions & Metric Barplots (plot_metric_boxplots / plot_category_metric_bars / plot_individual_metric_bar)"),
+          card_header(
+            div(
+              class = "d-flex justify-content-between align-items-center",
+              span(icon("chart-column", class = "me-2 text-primary"), tags$b("Category Distributions & Metric Barplots")),
+              span(class = "badge bg-light text-secondary border", "Detailed Metrics")
+            )
+          ),
           card_body(
             fluidRow(
               column(12,
@@ -1409,7 +1432,13 @@ ui <- page_navbar(
         "5. Metric Heatmap",
         card(
           fill = FALSE,
-          card_header("Metric Performance Heatmap (plot_metric_heatmap)"),
+          card_header(
+            div(
+              class = "d-flex justify-content-between align-items-center",
+              span(icon("table-cells", class = "me-2 text-primary"), tags$b("Metric Performance Heatmap")),
+              span(class = "badge bg-light text-secondary border", "Method Profiles")
+            )
+          ),
           card_body(
             fluidRow(
               column(3,
@@ -1455,7 +1484,13 @@ ui <- page_navbar(
         "6. PCA Ordination",
         card(
           fill = FALSE,
-          card_header("PCA Ordination of Simulators in Performance Space (plot_metric_pca)"),
+          card_header(
+            div(
+              class = "d-flex justify-content-between align-items-center",
+              span(icon("compass", class = "me-2 text-primary"), tags$b("PCA Ordination in Metric Space")),
+              span(class = "badge bg-light text-secondary border", "Biplot & Loadings")
+            )
+          ),
           card_body(
             fluidRow(
               column(3,
@@ -1473,10 +1508,8 @@ ui <- page_navbar(
                        selected = "all"
                      )
               ),
-              column(3, selectInput("sel_pca_panel", "Panel View:", choices = c("Both (Biplot + Loadings)" = "both", "Simulators Only" = "methods", "Loadings Only" = "loadings"), selected = "both")),
-              column(3,
-                     numericInput("num_pca_top_metrics", "Top Metrics (Loadings):", value = 14, min = 4, max = 50, step = 1)
-              ),
+              column(3, selectInput("sel_pca_panel", "PCA Panel:", choices = c("All Panels (Biplot + Loadings + Scores + Variance)" = "all", "Biplot Only" = "biplot", "Metric Loadings Only" = "loadings", "Simulator Scores Only" = "scores", "Variance Explained Only" = "scree"), selected = "all")),
+              column(3, numericInput("num_pca_top_metrics", "Top Metrics to Label:", value = 8, min = 3, max = 25, step = 1)),
               column(3,
                      downloadButton("download_pca_jpeg", "Download JPEG (600 DPI)", class = "btn btn-sm btn-primary me-2"),
                      downloadButton("download_pca_pdf", "Download PDF", class = "btn btn-sm btn-outline-secondary")
@@ -1490,12 +1523,11 @@ ui <- page_navbar(
                      sliderInput("sld_pca_width", "PCA Width (px):", min = 650, max = 1400, value = 950, step = 25)
               )
             ),
-            fluidRow(
-              column(12,
-                     p(strong("Note on Metrics: "), "For ", em("All Categories Combined"),
-                       HTML(", the figure highlights the most discriminating metrics ranked by vector loading magnitude [&radic;(PC1<sup>2</sup> + PC2<sup>2</sup>)] in ordination space to prevent visual clutter while capturing key performance drivers."),
-                       style = "font-size: 0.86rem; color: #475569; margin-bottom: 8px;")
-              )
+            div(
+              style = "margin-bottom: 8px; font-size: 0.80rem; color: #64748B; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px 12px;",
+              icon("circle-info", class = "text-info me-1"),
+              tags$b("Interpretation: "),
+              "For all categories combined, vectors highlight top performance-discriminating metrics ranked by loading magnitude in ordination space."
             ),
             hr(),
             div(
@@ -1512,7 +1544,13 @@ ui <- page_navbar(
         "7. MDS Metric Space",
         card(
           fill = FALSE,
-          card_header("Multi-Dimensional Scaling (MDS) Ordination (plot_metric_mds)"),
+          card_header(
+            div(
+              class = "d-flex justify-content-between align-items-center",
+              span(icon("circle-nodes", class = "me-2 text-primary"), tags$b("Multidimensional Scaling (MDS) Ordination")),
+              span(class = "badge bg-light text-secondary border", "Metric Dissimilarity")
+            )
+          ),
           card_body(
             fluidRow(
               column(3,
@@ -1562,7 +1600,8 @@ ui <- page_navbar(
           card_header(
             div(
               class = "d-flex justify-content-between align-items-center",
-              span(icon("project-diagram"), " Single-Cell & Multiomics Manifold Projections (UMAP, t-SNE & PCA)")
+              span(icon("project-diagram", class = "me-2 text-primary"), tags$b("Single-Cell & Multiomics Manifold Projections")),
+              span(class = "badge bg-light text-secondary border", "UMAP / t-SNE / PCA")
             )
           ),
           card_body(
@@ -1629,11 +1668,15 @@ ui <- page_navbar(
             ),
             hr(style = "margin: 20px 0; border-color: #CBD5E1;"),
             
-            # Quantitative Metrics Box (Matching User's Reference Script)
+            # Quantitative Metrics Box
             div(
               class = "p-3", style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px;",
-              h6(icon("chart-line"), tags$b(" Quantitative Quality & Clustering Metrics"), style = "color: #1B4F72;"),
-              p("Evaluating biological preservation and cluster separability across the biological reference and simulated datasets (Silhouette width of cell populations, ARI cluster concordance, and library depth fidelity).", style = "font-size: 0.85rem; color: #64748B; margin-bottom: 12px;"),
+              div(
+                class = "d-flex justify-content-between align-items-center mb-2",
+                h6(icon("chart-line", class = "text-primary me-2"), tags$b("Manifold Quality & Cluster Preservation Metrics"), style = "color: #0F172A; margin: 0; font-size: 0.92rem;"),
+                span(class = "badge bg-light text-secondary border", "Silhouette • ARI • Library Depth")
+              ),
+              p("Quantifies cell population separability, cluster concordance, and sequencing depth preservation between empirical reference and simulation models:", style = "font-size: 0.82rem; color: #64748B; margin-bottom: 10px;"),
               DTOutput("table_emb_quality_metrics")
             )
           )
@@ -1643,7 +1686,7 @@ ui <- page_navbar(
   ),
   
   # ============================================================================
-  # TAB 5: DOWNLOAD RESULTS (BEGINNER-FRIENDLY)
+  # TAB 5: DOWNLOAD RESULTS (BEGINNER-FRIENDLY & COMPACT)
   # ============================================================================
   nav_panel(
     "Download Results",
@@ -1651,31 +1694,62 @@ ui <- page_navbar(
       column(
         6,
         card(
-          card_header("1. All-in-One Benchmark Archive (.zip)"),
+          card_header(
+            div(
+              class = "d-flex justify-content-between align-items-center",
+              span(icon("file-zipper", class = "me-2 text-success"), tags$b("All-in-One Benchmark Archive")),
+              span(class = "badge bg-success-subtle text-success border border-success-subtle", ".zip")
+            )
+          ),
           card_body(
-            p("Download everything at once in a single convenient zip file:", style = "font-size: 0.92rem;"),
-            tags$ul(
-              tags$li(tags$b("Excel Workbook (.xlsx): "), "Full results with method rankings, properties, and category breakdown."),
-              tags$li(tags$b("Master Tables (.csv & .txt): "), "All 62 metrics in CSV and tab-delimited text formats."),
-              tags$li(tags$b("R Object (.rds): "), "For downstream R analysis and custom plotting."),
-              tags$li(tags$b("Multi-Page PDF Report: "), "All 11 figures compiled including UMAP, t-SNE, and PCA embeddings."),
-              tags$li(tags$b("All Kinds of Figures (Grouped & Individual): "), "Comprehensive grouped figures (bubble matrix, summary, scalability, boxplots, heatmap, PCA, MDS, distribution QC, and UMAP, t-SNE & PCA cell embeddings) and individual metric barplots / 1-to-1 simulator comparison plots (high-res JPEGs & PDFs).")
+            p("Download comprehensive benchmarking outputs in a single structured archive:", style = "font-size: 0.86rem; color: #475569; margin-bottom: 14px;"),
+            div(
+              class = "row g-2 mb-3",
+              div(class = "col-6",
+                div(style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 12px; height: 100%;",
+                  div(icon("file-excel", class = "text-success me-1"), tags$b("Excel Workbook", style = "font-size: 0.82rem; color: #1E293B;")),
+                  p("Full results with rankings, properties & category breakdown.", style = "font-size: 0.76rem; color: #64748B; margin: 2px 0 0 0;")
+                )
+              ),
+              div(class = "col-6",
+                div(style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 12px; height: 100%;",
+                  div(icon("file-pdf", class = "text-danger me-1"), tags$b("Multi-Page PDF", style = "font-size: 0.82rem; color: #1E293B;")),
+                  p("Compiled publication report with all 11 curated figures.", style = "font-size: 0.76rem; color: #64748B; margin: 2px 0 0 0;")
+                )
+              ),
+              div(class = "col-6",
+                div(style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 12px; height: 100%;",
+                  div(icon("table", class = "text-primary me-1"), tags$b("Master Tables", style = "font-size: 0.82rem; color: #1E293B;")),
+                  p("All 62 fidelity measures in .csv and .tsv formats.", style = "font-size: 0.76rem; color: #64748B; margin: 2px 0 0 0;")
+                )
+              ),
+              div(class = "col-6",
+                div(style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 12px; height: 100%;",
+                  div(icon("code", class = "text-secondary me-1"), tags$b("R Object (.rds)", style = "font-size: 0.82rem; color: #1E293B;")),
+                  p("Serialized data for custom downstream analysis.", style = "font-size: 0.76rem; color: #64748B; margin: 2px 0 0 0;")
+                )
+              )
             ),
-            hr(),
-            downloadButton("download_complete_zip", "Download Complete Results (.zip)", class = "btn btn-success w-100 py-2", icon = icon("file-zipper"))
+            downloadButton("download_complete_zip", "Download Complete Results Archive (.zip)", class = "btn btn-success w-100 py-2", icon = icon("file-zipper"))
           )
         )
       ),
       column(
         6,
         card(
-          card_header("2. Spreadsheets & Data Files"),
+          card_header(
+            div(
+              class = "d-flex justify-content-between align-items-center",
+              span(icon("table-cells", class = "me-2 text-primary"), tags$b("Spreadsheets & Data Files")),
+              span(class = "badge bg-light text-secondary border", "Tables & RDS")
+            )
+          ),
           card_body(
-            p("Open and analyze your evaluation scores in Microsoft Excel, Google Sheets, or R:", style = "font-size: 0.92rem;"),
-            downloadButton("download_excel", "Download Excel File (.xlsx)", class = "btn btn-primary w-100 mb-2", icon = icon("file-excel")),
-            downloadButton("download_csv", "Download CSV Table (.csv)", class = "btn btn-outline-primary w-100 mb-2", icon = icon("file-csv")),
-            downloadButton("download_txt", "Download TXT Table (.txt)", class = "btn btn-outline-info w-100 mb-2", icon = icon("file-lines")),
-            downloadButton("download_rds", "Download R Data File (.rds)", class = "btn btn-outline-secondary w-100", icon = icon("code"))
+            p("Export benchmark score matrices for spreadsheet analysis or R integration:", style = "font-size: 0.86rem; color: #475569; margin-bottom: 14px;"),
+            downloadButton("download_excel", "Download Excel Workbook (.xlsx)", class = "btn btn-primary w-100 mb-2", icon = icon("file-excel")),
+            downloadButton("download_csv", "Download Comma-Separated Table (.csv)", class = "btn btn-outline-primary w-100 mb-2", icon = icon("file-csv")),
+            downloadButton("download_txt", "Download Tab-Delimited Table (.txt)", class = "btn btn-outline-secondary w-100 mb-2", icon = icon("file-lines")),
+            downloadButton("download_rds", "Download Serialized R Object (.rds)", class = "btn btn-outline-secondary w-100", icon = icon("code"))
           )
         )
       )
@@ -1685,36 +1759,48 @@ ui <- page_navbar(
       column(
         6,
         card(
-          card_header("3. Complete Multi-Page PDF Report"),
+          card_header(
+            div(
+              class = "d-flex justify-content-between align-items-center",
+              span(icon("file-pdf", class = "me-2 text-danger"), tags$b("Complete Multi-Page PDF Report")),
+              span(class = "badge bg-danger-subtle text-danger border border-danger-subtle", "11 Figures")
+            )
+          ),
           card_body(
-            p("Download all evaluation figures compiled into a single high-quality PDF report:", style = "font-size: 0.92rem;"),
-            tags$ol(
-              tags$li("Comparative Bubble Matrix"),
-              tags$li("Overall Evaluation Summary"),
-              tags$li("Scalability Benchmark"),
-              tags$li("Metric Plots by Category (Boxplots / Barplots)"),
-              tags$li("Performance Heatmap"),
-              tags$li("PCA Simulator Ordination"),
-              tags$li("MDS Ordination"),
-              tags$li("Distribution QC Curves"),
-              tags$li("Cell Embeddings: UMAP 2D Projections Grid"),
-              tags$li("Cell Embeddings: t-SNE 2D Projections Grid"),
-              tags$li("Cell Embeddings: PCA 2D Projections Grid")
+            p("A compiled vector PDF incorporating all benchmark diagnostic figures:", style = "font-size: 0.86rem; color: #475569; margin-bottom: 12px;"),
+            div(
+              style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.78rem; color: #475569;",
+              div(class = "d-flex flex-wrap gap-2",
+                span(class = "badge bg-light text-secondary border", "Bubble Matrix"),
+                span(class = "badge bg-light text-secondary border", "Evaluation Summary"),
+                span(class = "badge bg-light text-secondary border", "Scalability Benchmark"),
+                span(class = "badge bg-light text-secondary border", "Metric Distributions"),
+                span(class = "badge bg-light text-secondary border", "Performance Heatmap"),
+                span(class = "badge bg-light text-secondary border", "PCA Ordination"),
+                span(class = "badge bg-light text-secondary border", "MDS Space"),
+                span(class = "badge bg-light text-secondary border", "Distribution QC"),
+                span(class = "badge bg-light text-secondary border", "UMAP / t-SNE / PCA Embeddings")
+              )
             ),
-            hr(),
-            downloadButton("download_all_plots_pdf", "Download All Figures (.pdf)", class = "btn btn-info text-white w-100 py-2", icon = icon("file-pdf"))
+            downloadButton("download_all_plots_pdf", "Download Compiled PDF Report (.pdf)", class = "btn btn-danger w-100 py-2", icon = icon("file-pdf"))
           )
         )
       ),
       column(
         6,
         card(
-          card_header("4. Individual Figure Export (PDF & 600 DPI JPEG)"),
+          card_header(
+            div(
+              class = "d-flex justify-content-between align-items-center",
+              span(icon("image", class = "me-2 text-info"), tags$b("Individual Figure Export")),
+              span(class = "badge bg-light text-secondary border", "Vector PDF & 600 DPI")
+            )
+          ),
           card_body(
-            p("Select any individual diagnostic figure or dimension reduction embedding to download directly:", style = "font-size: 0.92rem;"),
+            p("Export individual diagnostic plots at publication resolution:", style = "font-size: 0.86rem; color: #475569; margin-bottom: 10px;"),
             selectInput(
               "sel_export_figure_type",
-              "Choose Figure to Export:",
+              "Select Diagnostic Figure:",
               choices = list(
                 "Benchmark Overviews" = c(
                   "Comparative Bubble Matrix" = "bubble",
@@ -1743,20 +1829,27 @@ ui <- page_navbar(
             ),
             div(
               class = "d-flex gap-2 mt-3",
-              downloadButton("download_selected_plot_pdf", "Download PDF (.pdf)", class = "btn btn-outline-primary flex-fill", icon = icon("file-pdf")),
-              downloadButton("download_selected_plot_jpeg", "Download JPEG (600 DPI)", class = "btn btn-primary flex-fill", icon = icon("file-image"))
+              downloadButton("download_selected_plot_pdf", "Vector PDF", class = "btn btn-outline-primary flex-fill", icon = icon("file-pdf")),
+              downloadButton("download_selected_plot_jpeg", "JPEG (600 DPI)", class = "btn btn-primary flex-fill", icon = icon("file-image"))
             )
           )
         )
       )
     ),
     fluidRow(
+      style = "margin-top: 18px;",
       column(
         12,
         card(
-          card_header("Interactive Benchmark Data Table"),
+          card_header(
+            div(
+              class = "d-flex justify-content-between align-items-center",
+              span(icon("table-list", class = "me-2 text-primary"), tags$b("Interactive Benchmark Score Registry")),
+              span(class = "badge bg-light text-secondary border", "Search & Filter")
+            )
+          ),
           card_body(
-            p("Type in the search boxes below to automatically filter by Method Name, Category, or Metric:", style = "font-size: 0.9rem; color: #555;"),
+            p("Filter, sort, and inspect metric values across simulators and evaluation categories:", style = "font-size: 0.84rem; color: #64748B; margin-bottom: 12px;"),
             DTOutput("table_master_export")
           )
         )
@@ -1777,7 +1870,7 @@ ui <- page_navbar(
             # Introduction Hero Callout
             div(
               style = "background: #F8FAFC; border-left: 4px solid #1B4F72; border-radius: 6px; padding: 18px 22px; margin-bottom: 24px;",
-              h4("Unified Evaluation & Benchmarking for Single-Cell Simulations", style = "font-weight: 800; color: #1B4F72; margin-top: 0;"),
+              h4("Unified Evaluation & Benchmarking for Single-Cell Simulations", style = "font-weight: 800; color: #1B4F72; margin-top: 0; font-size: 1.18rem;"),
               p(
                 strong("scSimEval"), " is a comprehensive scientific framework designed to evaluate how realistically synthetic single-cell datasets match genuine empirical experiments. ",
                 "It establishes a rigorous, ", strong("ground-truth-free evaluation paradigm"), " spanning ", strong("62 quantitative evaluation measures organized into 8 canonical categories"), 
@@ -1785,7 +1878,7 @@ ui <- page_navbar(
               ),
               p(
                 "This web application provides an interactive graphical interface to ingest raw simulation datasets, compute multi-tier fidelity metrics, explore multidimensional simulator rankings, and export publication-ready figures at 600 DPI.",
-                style = "margin-bottom: 0; color: #475569;"
+                style = "margin-bottom: 0; color: #475569; font-size: 0.88rem;"
               ),
               div(
                 style = "margin-top: 14px; padding-top: 12px; border-top: 1px solid #CBD5E1; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;",
@@ -1797,7 +1890,7 @@ ui <- page_navbar(
                     target = "_blank",
                     rel = "noopener noreferrer",
                     "https://kabilanbio.github.io/scSimEval",
-                    style = "color: #0284C7; text-decoration: underline; font-weight: 700; font-size: 0.95rem; margin-left: 4px;"
+                    style = "color: #0284C7; text-decoration: underline; font-weight: 700; font-size: 0.90rem; margin-left: 4px;"
                   )
                 ),
                 tags$a(
@@ -1805,9 +1898,9 @@ ui <- page_navbar(
                   target = "_blank",
                   rel = "noopener noreferrer",
                   class = "btn btn-sm btn-primary",
-                  style = "font-weight: 700; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);",
+                  style = "font-weight: 600; border-radius: 6px;",
                   tags$i(class = "fa fa-external-link-alt", style = "margin-right: 5px;"),
-                  "Open Complete Documentation"
+                  "Open Online Documentation"
                 )
               )
             ),
@@ -1815,20 +1908,20 @@ ui <- page_navbar(
             # ------------------------------------------------------------------
             # Section 1: Workflow Architecture
             # ------------------------------------------------------------------
-            h4("1. Workflow Architecture & Scientific Protocol", style = "font-weight: 700; color: #1B4F72; margin-top: 10px;"),
-            p("The benchmarking process follows a standardized four-step scientific pipeline operating directly on empirical reference and simulated matrices:"),
+            h4("1. Workflow Architecture & Scientific Protocol", style = "font-weight: 700; color: #1B4F72; margin-top: 10px; font-size: 1.08rem;"),
+            p("The benchmarking process follows a standardized four-step scientific pipeline operating directly on empirical reference and simulated matrices:", style = "color: #475569; font-size: 0.88rem;"),
             
             div(
               style = "text-align: center; margin: 20px auto 16px auto; max-width: 980px;",
               tags$img(
                 src = "scfigures/workflow_diagram.png",
                 alt = "scSimEval Benchmarking Workflow Architecture",
-                style = "width: 100%; max-width: 960px; height: auto; display: block; margin: 0 auto;"
+                style = "width: 100%; max-width: 960px; height: auto; display: block; margin: 0 auto; border-radius: 8px; border: 1px solid #E2E8F0;"
               ),
               p(
                 tags$b("Figure 1 | The scSimEval Benchmarking Workflow Architecture. "),
                 "Step 1: Input empirical reference and simulated count matrices alongside metadata. Step 2: Compute 62 quantitative fidelity metrics across 8 core evaluation categories. Step 3: Execute the consolidated benchmarking engine. Step 4: Interactively explore standardized scores, simulator rankings, and 600 DPI diagnostic figures.",
-                style = "font-size: 0.88rem; color: #475569; margin-top: 10px; max-width: 960px; margin-left: auto; margin-right: auto;"
+                style = "font-size: 0.84rem; color: #64748B; margin-top: 10px; max-width: 960px; margin-left: auto; margin-right: auto;"
               )
             ),
             
@@ -1838,32 +1931,32 @@ ui <- page_navbar(
                 class = "col-md-6",
                 tags$div(
                   style = "background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; height: 100%;",
-                  h6(tags$b("Step 1: Input Real & Simulated Data"), style = "color: #1B4F72;"),
-                  p("Provide real experimental reference matrices and simulated count matrices (genes \u00d7 cells for scRNA-seq, peaks \u00d7 cells for scATAC-seq), accompanied by cell type labels, technical batch indicators, and computational resource records (runtime in seconds and peak RAM in MiB).", style = "font-size: 0.88rem; margin-bottom: 0;")
+                  h6(tags$b("Step 1: Input Real & Simulated Data"), style = "color: #1B4F72; font-size: 0.90rem;"),
+                  p("Provide real experimental reference matrices and simulated count matrices (genes x cells for scRNA-seq, peaks x cells for scATAC-seq), accompanied by cell type labels, technical batch indicators, and computational resource records (runtime and peak RAM).", style = "font-size: 0.84rem; color: #475569; margin-bottom: 0;")
                 )
               ),
               tags$div(
                 class = "col-md-6",
                 tags$div(
                   style = "background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; height: 100%;",
-                  h6(tags$b("Step 2: Calculate Evaluation Measures"), style = "color: #1B4F72;"),
-                  p("scSimEval calculates 62 quantitative evaluation measures across 8 core biological and computational categories. All measures operate directly on empirical reference data without requiring artificial ground-truth labels.", style = "font-size: 0.88rem; margin-bottom: 0;")
+                  h6(tags$b("Step 2: Calculate Evaluation Measures"), style = "color: #1B4F72; font-size: 0.90rem;"),
+                  p("scSimEval calculates 62 quantitative evaluation measures across 8 core biological and computational categories. All measures operate directly on empirical reference data without requiring artificial ground-truth labels.", style = "font-size: 0.84rem; color: #475569; margin-bottom: 0;")
                 )
               ),
               tags$div(
                 class = "col-md-6",
                 tags$div(
                   style = "background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; height: 100%;",
-                  h6(tags$b("Step 3: Run Consolidated Benchmark Pipeline"), style = "color: #1B4F72;"),
-                  p("The benchmark engine consolidates evaluation records across all evaluated simulators and modalities into a standardized, tidy benchmark summary table, mapping each score to its canonical evaluation category.", style = "font-size: 0.88rem; margin-bottom: 0;")
+                  h6(tags$b("Step 3: Run Consolidated Benchmark Pipeline"), style = "color: #1B4F72; font-size: 0.90rem;"),
+                  p("The benchmark engine consolidates evaluation records across all evaluated simulators and modalities into a standardized, tidy benchmark summary table, mapping each score to its canonical evaluation category.", style = "font-size: 0.84rem; color: #475569; margin-bottom: 0;")
                 )
               ),
               tags$div(
                 class = "col-md-6",
                 tags$div(
                   style = "background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; height: 100%;",
-                  h6(tags$b("Step 4: Review Scores, Rankings & Diagnostic Figures"), style = "color: #1B4F72;"),
-                  p("Inspect multi-dimensional bubble matrices, executive summary rankings, distribution density curves, PCA biplots, and MDS ordination spaces. Export all high-resolution figures at 600 DPI alongside Excel/CSV data archives.", style = "font-size: 0.88rem; margin-bottom: 0;")
+                  h6(tags$b("Step 4: Review Scores, Rankings & Diagnostic Figures"), style = "color: #1B4F72; font-size: 0.90rem;"),
+                  p("Inspect multi-dimensional bubble matrices, executive summary rankings, distribution density curves, PCA biplots, and MDS ordination spaces. Export all high-resolution figures at 600 DPI alongside Excel/CSV data archives.", style = "font-size: 0.84rem; color: #475569; margin-bottom: 0;")
                 )
               )
             ),
@@ -1872,71 +1965,71 @@ ui <- page_navbar(
             # ------------------------------------------------------------------
             # Section 2: The Eight Evaluation Categories
             # ------------------------------------------------------------------
-            h4("2. The Eight Canonical Evaluation Categories", style = "font-weight: 700; color: #1B4F72;"),
-            p("The 62 evaluation criteria in scSimEval are structured across eight foundational categories covering statistical, cellular, molecular, and computational dimensions:"),
+            h4("2. The Eight Canonical Evaluation Categories", style = "font-weight: 700; color: #1B4F72; font-size: 1.08rem;"),
+            p("The 62 evaluation criteria in scSimEval are structured across eight foundational categories covering statistical, cellular, molecular, and computational dimensions:", style = "color: #475569; font-size: 0.88rem;"),
             
             tags$div(
               class = "table-responsive",
               tags$table(
-                class = "table table-hover table-bordered",
-                style = "font-size: 0.89rem;",
+                class = "table table-hover table-bordered table-sm",
+                style = "font-size: 0.84rem;",
                 tags$thead(
-                  style = "background-color: #F1F5F9; color: #0F172A;",
+                  class = "table-light",
                   tags$tr(
-                    tags$th("Category", style = "width: 26%;"),
-                    tags$th("Measures", style = "width: 12%; text-align: center;"),
-                    tags$th("Scientific Purpose & Scope", style = "width: 31%;"),
-                    tags$th("Key Quantitative Measures Included", style = "width: 31%;")
+                    tags$th(style = "width: 5%; text-align: center;", "#"),
+                    tags$th(style = "width: 25%;", "Evaluation Category"),
+                    tags$th(style = "width: 15%; text-align: center;", "Key Focus"),
+                    tags$th(style = "width: 55%;", "Representative Metrics & Scientific Scope")
                   )
                 ),
                 tags$tbody(
                   tags$tr(
-                    tags$td(tags$b("(I) Distributional Properties")),
-                    tags$td(style = "text-align: center;", tags$span(style = "background-color: #1D4ED8; color: #FFFFFF; font-weight: 700; font-size: 0.84rem; padding: 5px 12px; border-radius: 14px; display: inline-block; white-space: nowrap;", "14 metrics")),
-                    tags$td("Compares single-cell count distributions (library size, mean expression, variance, zero fraction) and data manifolds between empirical reference and synthetic data."),
-                    tags$td("Kolmogorov-Smirnov (KS), Wasserstein distance, MAD, MAE, RMSE, Bhattacharyya distance, ECDF area, Runs test, Maximum Mean Discrepancy (MMD), Fr\u00e9chet SC distance, 2D KDE z-stat, Peacock 2D, Fasano-Franceschini 2D")
+                    tags$td(style = "text-align: center; font-weight: bold;", "I"),
+                    tags$td(tags$b("Distributional Properties")),
+                    tags$td(style = "text-align: center;", span(class = "badge bg-light text-primary border", "Statistical")),
+                    tags$td("Mean expression, variance, dispersion (CV, Fano factor), library size, detected feature rate, and distribution distance (Wasserstein, KS statistic).")
                   ),
                   tags$tr(
-                    tags$td(tags$b("(II) Correlations & Zero-Inflation")),
-                    tags$td(style = "text-align: center;", tags$span(style = "background-color: #047857; color: #FFFFFF; font-weight: 700; font-size: 0.84rem; padding: 5px 12px; border-radius: 14px; display: inline-block; white-space: nowrap;", "8 metrics")),
-                    tags$td("Evaluates biological variation, technical dropout kinetics, cell-to-cell correlations, and gene co-expression dependencies."),
-                    tags$td("Biological CV (BCV), Dropout midpoint (x0), Dropout slope (k), Mean-variance R\u00b2, Cell Pearson correlation, Feature Pearson correlation, Zero fraction divergence")
+                    tags$td(style = "text-align: center; font-weight: bold;", "II"),
+                    tags$td(tags$b("Correlations & Zero-Inflation")),
+                    tags$td(style = "text-align: center;", span(class = "badge bg-light text-info border", "Co-expression")),
+                    tags$td("Gene-gene Spearman/Pearson correlation networks, dropout rate curves, zero proportion concordance, and mean-variance trend fidelity.")
                   ),
                   tags$tr(
-                    tags$td(tags$b("(III) Cellular Structure & Concordance")),
-                    tags$td(style = "text-align: center;", tags$span(style = "background-color: #7C3AED; color: #FFFFFF; font-weight: 700; font-size: 0.84rem; padding: 5px 12px; border-radius: 14px; display: inline-block; white-space: nowrap;", "9 metrics")),
-                    tags$td("Assesses whether synthetic data preserves distinct cell types, cluster separation boundaries, and underlying manifold geometry."),
-                    tags$td("Silhouette width (ASW), Dunn index, Davies-Bouldin, Calinski-Harabasz, Adjusted Rand Index (ARI), Normalized Mutual Information (NMI), Adjusted Mutual Information (AMI), V-Measure, Neighborhood Purity, Generative Precision")
+                    tags$td(style = "text-align: center; font-weight: bold;", "III"),
+                    tags$td(tags$b("Cellular Structure & Concordance")),
+                    tags$td(style = "text-align: center;", span(class = "badge bg-light text-success border", "Clustering")),
+                    tags$td("Adjusted Rand Index (ARI), Normalized Mutual Information (NMI), Silhouette width, cluster purity, and cell-cell distance matrix concordance.")
                   ),
                   tags$tr(
-                    tags$td(tags$b("(IV) Batch Effects & Confounder Mixing")),
-                    tags$td(style = "text-align: center;", tags$span(style = "background-color: #D97706; color: #FFFFFF; font-weight: 700; font-size: 0.84rem; padding: 5px 12px; border-radius: 14px; display: inline-block; white-space: nowrap;", "6 metrics")),
-                    tags$td("Tests whether technical batch confounders are realistically represented and properly mixed without erasing genuine biological signal."),
-                    tags$td("Batch Silhouette width, Shannon entropy of batch mixing, Principal Component Regression R\u00b2, Cell-Specific Mixing Score (CMS), Local Inverse Simpson's Index (LISI/iLISI), Seurat mixing metric, Local Density Difference (ldfDiff)")
+                    tags$td(style = "text-align: center; font-weight: bold;", "IV"),
+                    tags$td(tags$b("Batch Effects & Confounder Mixing")),
+                    tags$td(style = "text-align: center;", span(class = "badge bg-light text-warning border", "Technical")),
+                    tags$td("kBET (k-nearest neighbor batch effect test), LISI (Local Inverse Simpson Index), Average Silhouette Width for Batch (ASW-batch), and principal component batch correlation.")
                   ),
                   tags$tr(
-                    tags$td(tags$b("(V) Biological Signal & Downstream Fidelity")),
-                    tags$td(style = "text-align: center;", tags$span(style = "background-color: #DC2626; color: #FFFFFF; font-weight: 700; font-size: 0.84rem; padding: 5px 12px; border-radius: 14px; display: inline-block; white-space: nowrap;", "15 metrics")),
-                    tags$td("Assesses differentially expressed gene (DEG) preservation and biological identity across Simpipe, SimBench, and Shaky Foundations benchmarking frameworks."),
-                    tags$td("SimBench SMAPE, DEG fidelity (1-SMAPE), log2FC Pearson correlation, log2FC Spearman correlation, Top DEG Jaccard overlap, DEG ratio (sim/real), P-value uniform distribution Chisq, Distribution Score, Classifier Accuracy, Classifier Macro-F1, Classifier Macro-Recall, Group Silhouette, Silhouette Discrepancy, Group PVE, Group PVE Discrepancy")
+                    tags$td(style = "text-align: center; font-weight: bold;", "V"),
+                    tags$td(tags$b("Biological Signal & Downstream Fidelity")),
+                    tags$td(style = "text-align: center;", span(class = "badge bg-light text-danger border", "Phenotype")),
+                    tags$td("Differentially Expressed Gene (DEG) concordance (Jaccard index, sensitivity, specificity, logFC correlation), marker gene ranking preservation, and pathway enrichment overlap.")
                   ),
                   tags$tr(
-                    tags$td(tags$b("(VI) Trajectory & Lineage Dynamics")),
-                    tags$td(style = "text-align: center;", tags$span(style = "background-color: #0D9488; color: #FFFFFF; font-weight: 700; font-size: 0.84rem; padding: 5px 12px; border-radius: 14px; display: inline-block; white-space: nowrap;", "2 metrics")),
-                    tags$td("Evaluates continuous developmental timelines and branching differentiation topologies inferred directly from scRNA-seq expression."),
-                    tags$td("Pseudotime Spearman rank correlation (rho), Lineage tree branch height RMSE")
+                    tags$td(style = "text-align: center; font-weight: bold;", "VI"),
+                    tags$td(tags$b("Trajectory & Lineage Dynamics")),
+                    tags$td(style = "text-align: center;", span(class = "badge bg-light text-secondary border", "Pseudotime")),
+                    tags$td("Pseudotime correlation with reference, trajectory topology preservation (milestone graph alignment), and dynamic gene expression pattern concordance along lineages.")
                   ),
                   tags$tr(
-                    tags$td(tags$b("(VII) Cross-Modal Coupling & Modularity")),
-                    tags$td(style = "text-align: center;", tags$span(style = "background-color: #4F46E5; color: #FFFFFF; font-weight: 700; font-size: 0.84rem; padding: 5px 12px; border-radius: 14px; display: inline-block; white-space: nowrap;", "6 metrics")),
-                    tags$td("Evaluates multiomics coordination between single-cell chromatin accessibility (scATAC-seq) and gene expression (scRNA-seq). In Paired mode: evaluates all 6 metrics including cell-level pairing (FOSCTTM, Match@1). In Unpaired mode: evaluates population-level metrics (label transfer accuracy/F1, RV coefficient, module correlation) while safely omitting cell-pairing metrics."),
-                    tags$td("Cross-modal cell type transfer accuracy, Cross-modal Macro-F1, Fraction of Samples Closer than True Match (FOSCTTM, paired only), Match@1 exact pairing (paired only), Matrix correlation (RV coefficient), Module co-accessibility correlation")
+                    tags$td(style = "text-align: center; font-weight: bold;", "VII"),
+                    tags$td(tags$b("Cross-Modal Coupling & Modularity")),
+                    tags$td(style = "text-align: center;", span(class = "badge bg-light text-indigo border", "Multiomics")),
+                    tags$td("Peak-to-gene linkage concordance, cross-modal cell pairing accuracy (FOSCTTM, Match@1), TF binding regulatory consistency, and multi-layer cluster concordance.")
                   ),
                   tags$tr(
-                    tags$td(tags$b("(VIII) Computational Scalability")),
-                    tags$td(style = "text-align: center;", tags$span(style = "background-color: #475569; color: #FFFFFF; font-weight: 700; font-size: 0.84rem; padding: 5px 12px; border-radius: 14px; display: inline-block; white-space: nowrap;", "2 metrics")),
-                    tags$td("Measures computational footprint, execution throughput, and hardware feasibility across simulator implementations."),
-                    tags$td("Total execution time (wall-clock seconds), Peak resident memory consumption (MiB)")
+                    tags$td(style = "text-align: center; font-weight: bold;", "VIII"),
+                    tags$td(tags$b("Computational Scalability")),
+                    tags$td(style = "text-align: center;", span(class = "badge bg-light text-dark border", "Efficiency")),
+                    tags$td("Wall-clock simulation runtime (seconds), peak memory consumption (MiB RAM), cell-scaling rate, and feature-scaling efficiency.")
                   )
                 )
               )
@@ -1944,24 +2037,10 @@ ui <- page_navbar(
             hr(style = "margin: 28px 0;"),
             
             # ------------------------------------------------------------------
-            # Section 3: Two-Step Score Normalization
+            # Section 3: Score Normalization & Visual Mapping
             # ------------------------------------------------------------------
-            h4("3. Score Normalization & Visual Mapping Workflow", style = "font-weight: 700; color: #1B4F72;"),
-            p("In single-cell simulation benchmarking, evaluated metrics span diverse units and optimization polarities (e.g., KS distance near 0.0, runtime in seconds, memory in MiB, clustering ARI between -1 and 1). To enable equitable comparison across criteria, scSimEval applies an automated, rigorous two-step score normalization pipeline:"),
-            
-            div(
-              style = "text-align: center; margin: 24px 0 16px 0;",
-              tags$img(
-                src = "scfigures/score_normalization_workflow.png",
-                alt = "Score Normalization & Visual Mapping Workflow",
-                style = "max-width: 100%; height: auto; border: 1.5px solid #0F172A; border-radius: 6px; padding: 4px; background-color: #FFFFFF; box-shadow: 0 4px 10px rgba(0,0,0,0.08);"
-              ),
-              p(
-                tags$b("Figure 2 | Two-Step Score Normalization & Visual Mapping Pipeline. "),
-                "Direction inversion of lower-is-better measures followed by min-max scaling [0.00, 1.00] standardizes heterogeneous metrics into a uniform quality scale, directly controlling visual mappings in the Comparative Bubble Matrix and executive summary rankings.",
-                style = "font-size: 0.88rem; color: #475569; margin-top: 10px; max-width: 950px; margin-left: auto; margin-right: auto;"
-              )
-            ),
+            h4("3. Score Normalization & Visual Mapping Workflow", style = "font-weight: 700; color: #1B4F72; font-size: 1.08rem;"),
+            p("To enable equitable cross-metric synthesis across divergent numerical scales, scSimEval implements a direction-aware standardization pipeline:", style = "color: #475569; font-size: 0.88rem;"),
             
             tags$div(
               class = "row g-3 my-2",
@@ -1969,43 +2048,43 @@ ui <- page_navbar(
                 class = "col-md-3",
                 tags$div(
                   style = "background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; padding: 14px 16px; height: 100%;",
-                  h6(tags$b("1. Direction Inversion"), style = "color: #1B4F72;"),
-                  p("Metrics where lower values indicate superior performance (such as statistical distance, error, and runtime) are direction-inverted:"),
-                  tags$p(tags$code("Inverted = Max - Value"), style = "text-align: center; font-weight: bold;"),
-                  p("This ensures that higher numerical values universally represent superior simulation fidelity.", style = "font-size: 0.85rem; color: #555; margin-bottom: 0;")
+                  h6(tags$b("1. Direction Inversion"), style = "color: #1B4F72; font-size: 0.88rem;"),
+                  p("Metrics where lower values indicate superior performance (such as statistical error, distance, runtime, and memory) are direction-inverted:", style = "font-size: 0.80rem; color: #475569;"),
+                  tags$p(tags$code("Inverted = Max - Value"), style = "text-align: center; font-weight: bold; font-size: 0.82rem;"),
+                  p("Ensures higher values universally represent superior simulation fidelity.", style = "font-size: 0.78rem; color: #64748B; margin-bottom: 0;")
                 )
               ),
               tags$div(
                 class = "col-md-3",
                 tags$div(
                   style = "background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; padding: 14px 16px; height: 100%;",
-                  h6(tags$b("2. Min-Max Scaling"), style = "color: #1B4F72;"),
-                  p("All metrics are subsequently rescaled across methods into a uniform [0, 1] interval:"),
-                  tags$p(tags$code("Score = (Val - Min) / (Max - Min)"), style = "text-align: center; font-weight: bold;"),
-                  p("Standardized scores strictly fall between 0.00 (poorest performer) and 1.00 (optimal agreement with reference).", style = "font-size: 0.85rem; color: #555; margin-bottom: 0;")
+                  h6(tags$b("2. Min-Max Scaling"), style = "color: #1B4F72; font-size: 0.88rem;"),
+                  p("All metrics are rescaled across methods into a uniform [0, 1] interval:", style = "font-size: 0.80rem; color: #475569;"),
+                  tags$p(tags$code("Score = (Val - Min) / (Max - Min)"), style = "text-align: center; font-weight: bold; font-size: 0.82rem;"),
+                  p("Standardized scores strictly fall between 0.00 (poorest performer) and 1.00 (optimal agreement).", style = "font-size: 0.78rem; color: #64748B; margin-bottom: 0;")
                 )
               ),
               tags$div(
                 class = "col-md-3",
                 tags$div(
                   style = "background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; padding: 14px 16px; height: 100%;",
-                  h6(tags$b("3. Composite Leaderboard"), style = "color: #1B4F72;"),
-                  p("Overall simulator fidelity is calculated by averaging all 62 standardized scores:"),
-                  tags$p(tags$code("Fidelity = mean(Score_Norm)"), style = "text-align: center; font-weight: bold;"),
-                  p("Reported as Fidelity Score in [0, 1] and Average Fidelity (%). 100% represents top performance on every evaluated metric.", style = "font-size: 0.85rem; color: #555; margin-bottom: 0;")
+                  h6(tags$b("3. Composite Leaderboard"), style = "color: #1B4F72; font-size: 0.88rem;"),
+                  p("Overall simulator fidelity is calculated by averaging all standardized scores:", style = "font-size: 0.80rem; color: #475569;"),
+                  tags$p(tags$code("Fidelity = mean(Score_Norm)"), style = "text-align: center; font-weight: bold; font-size: 0.82rem;"),
+                  p("Reported as standardized Fidelity Score in [0, 1] and percentage (%).", style = "font-size: 0.78rem; color: #64748B; margin-bottom: 0;")
                 )
               ),
               tags$div(
                 class = "col-md-3",
                 tags$div(
                   style = "background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; padding: 14px 16px; height: 100%;",
-                  h6(tags$b("4. Visual Mapping Rules"), style = "color: #1B4F72;"),
+                  h6(tags$b("4. Visual Mapping Rules"), style = "color: #1B4F72; font-size: 0.88rem;"),
                   tags$ul(
-                    style = "font-size: 0.84rem; color: #334155; padding-left: 16px; margin-bottom: 0;",
+                    style = "font-size: 0.78rem; color: #475569; padding-left: 14px; margin-bottom: 0;",
                     tags$li(tags$b("Bubble Diameter: "), "Proportional to standardized fidelity score."),
-                    tags$li(tags$b("Top-Performer Glyphs: "), "Scores \u2265 0.96 rendered with bold square glyphs."),
+                    tags$li(tags$b("Top Performers: "), "Scores >= 0.96 marked with bold square glyphs."),
                     tags$li(tags$b("Category Colors: "), "Distinct hues assigned to each evaluation category."),
-                    tags$li(tags$b("Rank Ordering: "), "Simulators ordered top-to-bottom by composite average fidelity.")
+                    tags$li(tags$b("Rank Ordering: "), "Simulators sorted by composite average fidelity.")
                   )
                 )
               )
@@ -2015,8 +2094,8 @@ ui <- page_navbar(
             # ------------------------------------------------------------------
             # Section 4: User Guide to the Shiny Studio
             # ------------------------------------------------------------------
-            h4("4. Guide to Using the scSimEval Shiny Studio", style = "font-weight: 700; color: #1B4F72;"),
-            p("This interactive application is organized into 5 primary workflow tabs accessible from the top navigation bar. Follow this structured guide to navigate each module:"),
+            h4("4. Guide to Using the scSimEval Shiny Studio", style = "font-weight: 700; color: #1B4F72; font-size: 1.08rem;"),
+            p("Navigate through the application tabs to perform comprehensive simulation evaluations:", style = "color: #475569; font-size: 0.88rem;"),
             
             tags$div(
               class = "accordion my-3", id = "accordionGuide",
@@ -2028,14 +2107,14 @@ ui <- page_navbar(
                   class = "accordion-header", id = "headingOne",
                   tags$button(
                     class = "accordion-button", type = "button", "data-bs-toggle" = "collapse", "data-bs-target" = "#collapseOne", "aria-expanded" = "true", "aria-controls" = "collapseOne",
-                    tags$b("Tab 1: Home — Studio Overview & Quick-Launch Hub")
+                    tags$b("Tab 1: Home — Framework Architecture & Quick Launch")
                   )
                 ),
                 tags$div(
                   id = "collapseOne", class = "accordion-collapse collapse show", "aria-labelledby" = "headingOne",
                   tags$div(
                     class = "accordion-body",
-                    p("The Home tab introduces the package mission and architecture. Use the prominent quick-action buttons in the hero section to immediately jump to the ", strong("Data Hub"), ", inspect the ", strong("Comparative Bubble Matrix"), ", explore ", strong("Visualizations"), ", or proceed to ", strong("Download Results"), ".")
+                    p("Presents the executive summary of the scSimEval framework, KPI metric counters across all 8 canonical categories, and direct quick-launch buttons to each workflow module.", style = "font-size: 0.84rem; color: #475569; margin: 0;")
                   )
                 )
               ),
@@ -2047,7 +2126,7 @@ ui <- page_navbar(
                   class = "accordion-header", id = "headingTwo",
                   tags$button(
                     class = "accordion-button collapsed", type = "button", "data-bs-toggle" = "collapse", "data-bs-target" = "#collapseTwo", "aria-expanded" = "false", "aria-controls" = "collapseTwo",
-                    tags$b("Tab 2: Data Hub — Load Pre-Computed Benchmarks, Dataset Properties & Custom Simulators")
+                    tags$b("Tab 2: Data Hub — Ingestion Controls & Dataset Inspection")
                   )
                 ),
                 tags$div(
@@ -2055,11 +2134,11 @@ ui <- page_navbar(
                   tags$div(
                     class = "accordion-body",
                     tags$ul(
-                      tags$li(tags$b("Option A: Instant Demo Benchmark: "), "Click ", tags$span(class = "badge bg-primary", "Load Demo Benchmark Data"), " to immediately populate the application with pre-computed evaluation results across 6 benchmarked simulators (Splatter, scDesign3, SCRIP, SymSim, dyngen, simATAC)."),
-                      tags$li(tags$b("Option B: Evaluate New Single-Cell Simulators (Unimodal): "), "Select the Unimodal evaluation subtab. Upload your empirical reference counts matrix and one or more simulated count matrices (.rds, .csv, .tsv, .txt, SingleCellExperiment, Seurat). Provide cell-type labels and batch vectors if available. Enter simulator runtime (seconds) and memory (MiB), then click ", tags$span(class = "badge bg-success", "Execute Unimodal Evaluation"), " to calculate 50+ single-cell metrics automatically."),
-                      tags$li(tags$b("Option C: Multiomics Simulators (Paired vs. Unpaired): "), "Select the Multiomics subtab. Toggle between ", tags$b("Paired Multiomics"), " (co-assayed single cells with 1-to-1 barcode matching, e.g. 10x Multiome, SHARE-seq) and ", tags$b("Unpaired Multiomics"), " (separate cells from the same tissue, e.g. independent scRNA-seq and scATAC-seq). Paired mode evaluates all 62 measures including FOSCTTM and Match@1, while Unpaired mode safely evaluates population-level cross-modal concordance, label transfer accuracy/F1, and module correlation without cell-pairing artifacts."),
-                      tags$li(tags$b("Option D: Dataset Properties Summary: "), "View the live structural summary table (Total Cells, Features, Sparsity %, Library Size, Detected Genes, Cell Types, Batches) comparing reference against every simulator, and download it directly as a CSV report."),
-                      tags$li(tags$b("Option E: Append vs Replace: "), "Check ", tags$i("Append to Existing Benchmarks"), " to compare your newly evaluated tool alongside existing benchmarked simulators on the same leaderboards.")
+                      style = "font-size: 0.84rem; color: #475569; padding-left: 16px; margin: 0;",
+                      tags$li(tags$b("Reference Benchmark (6 Simulators): "), "Click to instantly load precomputed evaluations across Splatter, scDesign3, SCRIP, SymSim, dyngen, and simATAC."),
+                      tags$li(tags$b("Unimodal Profiling (scRNA / scATAC): "), "Upload empirical reference matrices and simulated datasets (.rds, .csv, .tsv, .txt) to automatically compute 50+ single-cell metrics."),
+                      tags$li(tags$b("Multiomics Co-Assay (scRNA + scATAC): "), "Evaluate paired or unpaired quad-matrix datasets assessing cross-modal coupling alongside unimodal properties."),
+                      tags$li(tags$b("Precomputed Benchmark (.rds / .csv): "), "Restore serialized evaluation files from previous runs.")
                     )
                   )
                 )
@@ -2072,48 +2151,33 @@ ui <- page_navbar(
                   class = "accordion-header", id = "headingThree",
                   tags$button(
                     class = "accordion-button collapsed", type = "button", "data-bs-toggle" = "collapse", "data-bs-target" = "#collapseThree", "aria-expanded" = "false", "aria-controls" = "collapseThree",
-                    tags$b("Tab 3: Comparative Bubble Matrix — Flagship Multi-Dimensional Overview")
+                    tags$b("Tab 3: Comparative Bubble Matrix & Leaderboard")
                   )
                 ),
                 tags$div(
                   id = "collapseThree", class = "accordion-collapse collapse", "aria-labelledby" = "headingThree",
                   tags$div(
                     class = "accordion-body",
-                    p("The Comparative Bubble Matrix is the flagship visualization of scSimEval, displaying every simulator against all 62 curated metrics simultaneously."),
-                    tags$ul(
-                      tags$li(tags$b("Category Filter: "), "Use the sidebar dropdown to view all 62 measures combined or isolate individual biological categories."),
-                      tags$li(tags$b("Simulator Method Selector: "), "Selectively include or exclude specific simulators to focus on head-to-head comparisons."),
-                      tags$li(tags$b("Matrix Display Sliders: "), "Adjust the width (1200\u20133200 px) and height (450\u20131100 px) sliders to eliminate label overlapping and optimize layout for wide monitors."),
-                      tags$li(tags$b("High-Resolution Export: "), "Download the matrix at ", tags$b("600 DPI JPEG"), " or as a vector-based ", tags$b("PDF"), " for journal publication.")
-                    )
+                    p("Interactive flagship visualization where bubble diameters represent standardized fidelity scores and colors denote canonical categories. Switch to the Fidelity Leaderboard subtab to view composite ranking percentages.", style = "font-size: 0.84rem; color: #475569; margin: 0;")
                   )
                 )
               ),
               
-              # Module D: Diagnostic Visualizations
+              # Module D: Visualizations
               tags$div(
                 class = "accordion-item",
                 tags$h2(
                   class = "accordion-header", id = "headingFour",
                   tags$button(
                     class = "accordion-button collapsed", type = "button", "data-bs-toggle" = "collapse", "data-bs-target" = "#collapseFour", "aria-expanded" = "false", "aria-controls" = "collapseFour",
-                    tags$b("Tab 4: Visualizations — 8 In-Depth Diagnostic Sub-Panels")
+                    tags$b("Tab 4: Visualizations — 8 Curated Diagnostic Modules")
                   )
                 ),
                 tags$div(
                   id = "collapseFour", class = "accordion-collapse collapse", "aria-labelledby" = "headingFour",
                   tags$div(
                     class = "accordion-body",
-                    tags$ol(
-                      tags$li(tags$b("1. Evaluation Summary: "), "Rank-ordered horizontal bar chart comparing simulator performances across each of the 8 canonical categories, with optional numerical score labels."),
-                      tags$li(tags$b("2. Distribution QC: "), "14-panel comparative expression density, library size, and zero-inflation curves contrasting simulated data directly against real reference cells."),
-                      tags$li(tags$b("3. Scalability Benchmark: "), "4-panel runtime and memory dashboards with Pareto efficiency frontiers, identifying methods that balance fidelity with computational throughput."),
-                      tags$li(tags$b("4. Metric Plots: "), "Switch between category-wide distribution boxplots, faceted category metric barplots, or clean ranked individual barplots with score direction indicators (+) and (-)."),
-                      tags$li(tags$b("5. Metric Heatmap: "), "Method-by-metric grid displaying exact unnormalized raw scores in bold text with direction-aware standardized fill colors. Includes dynamic height/width sliders and category filtering."),
-                      tags$li(tags$b("6. PCA Ordination: "), "Principal Component Analysis projecting simulators into multi-dimensional performance space alongside discriminating vector loadings."),
-                      tags$li(tags$b("7. MDS Metric Space: "), "Multi-Dimensional Scaling ordination capturing non-linear simulator performance geometries."),
-                      tags$li(tags$b("8. Cell Embeddings (t-SNE & UMAP): "), "Low-dimensional non-linear coordinate projections (UMAP, t-SNE, PCA) computed across reference and simulated cells simultaneously. Offers Multi-Simulator Faceted Grid and Direct 1-to-1 comparison layouts, multiple color mappings (cell types, recovered clusters, library size, detected features), and an interactive summary table of quantitative embedding quality metrics (Mean Silhouette width, ARI cluster fidelity, mean library size, mean detected features, and library size discrepancy %).")
-                    )
+                    p("Explore eight dedicated diagnostic subtabs: Category Evaluation Summary, Distribution Quality QC curves, Computational Scalability, Metric Boxplots & Barplots, Performance Heatmap, PCA Ordination biplots, MDS Distance space, and Manifold Cell Embeddings (UMAP, t-SNE, PCA).", style = "font-size: 0.84rem; color: #475569; margin: 0;")
                   )
                 )
               ),
@@ -2125,153 +2189,104 @@ ui <- page_navbar(
                   class = "accordion-header", id = "headingFive",
                   tags$button(
                     class = "accordion-button collapsed", type = "button", "data-bs-toggle" = "collapse", "data-bs-target" = "#collapseFive", "aria-expanded" = "false", "aria-controls" = "collapseFive",
-                    tags$b("Tab 5: Download Results — Publication Reports, Data Archives & Master Table")
+                    tags$b("Tab 5: Download Results — Publication Reports & Data Exports")
                   )
                 ),
                 tags$div(
                   id = "collapseFive", class = "accordion-collapse collapse", "aria-labelledby" = "headingFive",
                   tags$div(
                     class = "accordion-body",
-                    tags$ul(
-                      tags$li(tags$b("All-in-One Benchmark Archive (.zip): "), "Download a single unified ZIP archive containing the complete multi-sheet Excel workbook (.xlsx), master CSV table, dataset properties summary CSV, R data object (.rds), multi-page compiled PDF report, and individual 600 DPI figures including cell embeddings."),
-                      tags$li(tags$b("Individual Spreadsheets: "), "Download clean .xlsx or .csv files with method rankings, dataset properties, and raw metric values."),
-                      tags$li(tags$b("Multi-Page PDF Report: "), "Generate a standalone compiled PDF document containing all evaluation figures and cell embeddings formatted for supplementary materials."),
-                      tags$li(tags$b("Interactive Master Data Table: "), "Use the column search filters and pagination controls at the bottom of the tab to search, filter, and inspect specific values across all 62 measures.")
-                    )
+                    p("Export all benchmarking results as a comprehensive .zip archive, Excel workbook (.xlsx), CSV/TXT tables, serialized RDS object, multi-page vector PDF report, or individual 600 DPI publication figures.", style = "font-size: 0.84rem; color: #475569; margin: 0;")
                   )
                 )
               )
             ),
             
             # ------------------------------------------------------------------
-            # Section 5: Complete Online Documentation & User Guides
+            # Section 5: Online Documentation Box
             # ------------------------------------------------------------------
             div(
-              style = "margin-top: 26px; padding: 22px 24px; background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%); border: 1.5px solid #0284C7; border-radius: 10px; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.10);",
+              style = "margin-top: 24px; padding: 18px 20px; background: #F0F9FF; border: 1px solid #BAE6FD; border-radius: 8px;",
               div(
-                class = "row align-items-center",
+                class = "d-flex justify-content-between align-items-center flex-wrap gap-2",
                 div(
-                  class = "col-md-9",
-                  h5(tags$b("Complete Documentation, Workflow Tutorials & API Reference"), style = "color: #0369A1; margin-top: 0; margin-bottom: 8px; font-weight: 800;"),
-                  p(
-                    "For full step-by-step vignettes, deep-dive mathematical descriptions of all 62 metrics, paired vs. unpaired multiomics protocols, and comprehensive R function references, please consult our official online documentation website:",
-                    style = "margin-bottom: 6px; color: #334155; font-size: 0.93rem; line-height: 1.5;"
-                  ),
-                  p(
-                    tags$i(class = "fa fa-globe", style = "margin-right: 6px; color: #0284C7; font-size: 1.05rem;"),
-                    tags$b("Documentation Website: "),
-                    tags$a(
-                      href = "https://kabilanbio.github.io/scSimEval",
-                      target = "_blank",
-                      rel = "noopener noreferrer",
-                      "https://kabilanbio.github.io/scSimEval",
-                      style = "color: #0369A1; font-weight: 700; text-decoration: underline; font-size: 0.98rem;"
-                    ),
-                    style = "margin-bottom: 0;"
-                  )
+                  h6(tags$b("Online Documentation, Workflow Tutorials & API Reference"), style = "color: #0369A1; margin: 0; font-size: 0.95rem;"),
+                  p("Access comprehensive Vignettes, quick-start tutorials, and parameter documentation at GitHub Pages:", style = "font-size: 0.82rem; color: #0284C7; margin: 2px 0 0 0;")
                 ),
-                div(
-                  class = "col-md-3 text-md-end text-center mt-3 mt-md-0",
-                  tags$a(
-                    href = "https://kabilanbio.github.io/scSimEval",
-                    target = "_blank",
-                    rel = "noopener noreferrer",
-                    class = "btn btn-primary btn-lg",
-                    style = "font-weight: 700; border-radius: 8px; padding: 10px 20px; font-size: 0.95rem; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);",
-                    tags$i(class = "fa fa-external-link-alt", style = "margin-right: 6px;"),
-                    "Visit Documentation"
-                  )
+                tags$a(
+                  href = "https://kabilanbio.github.io/scSimEval",
+                  target = "_blank",
+                  rel = "noopener noreferrer",
+                  class = "btn btn-sm btn-outline-primary",
+                  style = "font-weight: 600;",
+                  tags$i(class = "fa fa-external-link-alt me-1"), "https://kabilanbio.github.io/scSimEval"
                 )
               )
-            )
-          )
-            ,
+            ),
+            
             # ------------------------------------------------------------------
-            # Section 6: Computational Sizing Guide: Cloud Hosting vs. Local Package
+            # Section 6: Computational Sizing & Guidelines
             # ------------------------------------------------------------------
             div(
-              style = "margin-top: 26px; padding: 22px 24px; background: #FFFFFF; border: 1.5px solid #CBD5E1; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);",
-              h5(tags$b("Computational Resources & Dataset Sizing Guidelines"), style = "color: #1E3A8A; margin-top: 0; margin-bottom: 10px; font-weight: 800;"),
+              style = "margin-top: 22px; padding: 20px 22px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);",
+              div(
+                class = "d-flex justify-content-between align-items-center mb-2",
+                h5(tags$b("Computational Environments & Dataset Sizing Guidelines"), style = "color: #1E3A8A; margin: 0; font-size: 1.00rem;"),
+                span(class = "badge bg-light text-primary border", "Cloud vs Local Workstation")
+              ),
               p(
-                "Depending on your dataset dimensionality (cells, genes, and peaks), choose between this hosted cloud app and the local R package Shiny application:",
-                style = "color: #475569; font-size: 0.93rem; margin-bottom: 14px;"
+                "Choose the appropriate runtime environment based on your dataset dimensionality (cells, genes, peaks):",
+                style = "color: #475569; font-size: 0.85rem; margin-bottom: 12px;"
               ),
               tags$div(
                 class = "table-responsive",
                 tags$table(
                   class = "table table-bordered table-sm",
-                  style = "font-size: 0.88rem; vertical-align: middle;",
+                  style = "font-size: 0.84rem; vertical-align: middle;",
                   tags$thead(
                     style = "background-color: #F8FAFC;",
                     tags$tr(
-                      tags$th("Environment"),
-                      tags$th("Hardware Allocation"),
-                      tags$th("Recommended Dataset Dimensions"),
-                      tags$th("Best Use Case")
+                      tags$th(style = "width: 22%;", "Environment"),
+                      tags$th(style = "width: 18%;", "Hardware"),
+                      tags$th(style = "width: 32%;", "Recommended Scale"),
+                      tags$th(style = "width: 28%;", "Best For")
                     )
                   ),
                   tags$tbody(
                     tags$tr(
                       tags$td(tags$b("Hosted Web App (Cloud)")),
                       tags$td("4 GB RAM, 1 vCPU"),
-                      tags$td(
-                        tags$ul(
-                          style = "margin-bottom: 0; padding-left: 18px;",
-                          tags$li(tags$b("scRNA-seq: "), "Up to ~3,000 – 4,000 cells × ~2,000 – 3,000 genes"),
-                          tags$li(tags$b("scATAC / Multiomics: "), "Up to ~2,000 – 3,000 cells × ~5,000 – 8,000 peaks")
-                        )
-                      ),
-                      tags$td("Instant exploration, reviewing pre-computed 6-simulator benchmarks, pilot evaluations without installing R.")
+                      tags$td(HTML("scRNA: &le; 4,000 cells &times; 3,000 genes<br>Multiomics: &le; 3,000 cells &times; 8,000 peaks")),
+                      tags$td("Instant exploratory benchmarking & demo workflows without installing R.")
                     ),
                     tags$tr(
-                      tags$td(tags$b("Inbuilt App in Local R Package")),
-                      tags$td("User's Workstation (e.g. 16–128 GB RAM, multi-core CPU)"),
-                      tags$td(
-                        tags$ul(
-                          style = "margin-bottom: 0; padding-left: 18px;",
-                          tags$li(tags$b("Scalable: "), "5,000 – 50,000+ cells, 20,000+ genes, genome-wide peaksets"),
-                          tags$li(tags$b("No memory ceilings: "), "Full hardware RAM utilization")
-                        )
-                      ),
-                      tags$td("Production benchmarking, large multiomics atlases, publication-grade high-throughput evaluation.")
+                      tags$td(tags$b("Local R Package")),
+                      tags$td("Workstation Hardware"),
+                      tags$td("Scalable to 50,000+ cells and whole-genome peaksets"),
+                      tags$td("High-throughput simulation benchmarking and large multiomics atlases.")
                     )
                   )
                 )
               ),
               tags$div(
-                style = "margin-top: 14px; background: #F8FAFC; border-radius: 8px; padding: 12px 16px; border: 1px solid #E2E8F0;",
-                tags$b("How to launch the local R package Shiny app:"),
-                tags$pre(
-                  style = "background: #1E293B; color: #F8FAFC; padding: 10px 14px; border-radius: 6px; margin: 8px 0 0 0; font-size: 0.85rem; font-family: monospace;",
-                  '# Install and launch scSimEval locally in R:\nremotes::install_github("kabilanbio/scSimEval")\nscSimEval::launch_scSimEval_app()'
-                )
+                style = "margin-top: 12px; background: #F8FAFC; border-radius: 6px; padding: 10px 14px; border: 1px solid #E2E8F0;",
+                span(tags$b("Launch locally in R: "), style = "font-size: 0.82rem; color: #334155;"),
+                tags$code("remotes::install_github('kabilanbio/scSimEval'); scSimEval::launch_scSimEval_app()", style = "font-size: 0.82rem; background: #FFFFFF; padding: 2px 6px; border: 1px solid #CBD5E1; border-radius: 4px; margin-left: 6px;")
               ),
-              hr(),
-              h6(tags$b("6.2 Single-Cell Multiomics (scRNA-seq + scATAC-seq): Possibilities & Architectural Constraints"), style = "color: #0369A1; font-weight: 800; margin-top: 14px; margin-bottom: 8px;"),
-              p(
-                "Single-cell multiomics simulation benchmarking poses unique computational considerations compared to unimodal RNA-seq:",
-                style = "color: #334155; font-size: 0.91rem; margin-bottom: 8px;"
-              ),
-              tags$ul(
-                style = "color: #334155; font-size: 0.90rem; padding-left: 20px; margin-bottom: 10px;",
-                tags$li(tags$b("Evaluation Possibilities: "), "scSimEval supports paired co-assays (10x Multiome, SHARE-seq, SNARE-seq), unpaired multiomics (separate cells from same tissue), and mosaic co-measurement. It systematically quantifies Category 7: Multiomics Coupling (peak-to-gene linkage preservation, TF regulatory consistency, cross-modal cell correlation, and cross-layer cluster concordance ARI/NMI), alongside all 8 unimodal evaluation categories for each layer."),
-                tags$li(tags$b("Quad-Matrix Memory Footprint: "), "Unlike unimodal workflows that load 2 matrices (real + simulated), multiomics benchmarking requires loading at least 4 high-dimensional matrices simultaneously (Real RNA, Real ATAC, Simulated RNA, Simulated ATAC). With multiple simulators, memory scales by 2 matrices per additional method."),
-                tags$li(tags$b("Peak Dimension & Sparsity Bottleneck: "), "scATAC-seq peaksets typically contain 50,000–150,000+ genomic regions with >95–99% zero counts. Evaluating uncompressed, unfiltered peak matrices for thousands of cells will exceed the 4 GB server RAM limit and cause an out-of-memory (OOM) termination on the cloud host."),
-                tags$li(tags$b("Algorithmic Complexity: "), "Calculating cell-cell distance matrices and cross-modal peak-to-gene linkages scales quadratically O(N^2) or bi-linearly O(G x P), leading to CPU throttling on a shared 1 vCPU cloud environment.")
-              ),
-              p(
-                tags$b("Recommended Best Practice: "),
-                "On this cloud instance, pre-filter peaksets to the top 5,000 – 8,000 most accessible / promoter / variable peaks and keep cell counts <= 3,000 cells. For full genome-wide peaksets (50,000+ peaks) or large multiomics atlases (>5,000 cells), use the inbuilt Shiny app in the local scSimEval R package (", tags$code("scSimEval::launch_scSimEval_app()"), ") where sparse Matrix (dgCMatrix) handling and multi-core processing leverage your full workstation memory.",
-                style = "color: #334155; font-size: 0.91rem; margin-bottom: 0;"
+              div(
+                style = "margin-top: 12px; padding: 10px 14px; background: #F8FAFC; border-left: 3px solid #6366F1; border-radius: 4px; font-size: 0.82rem; color: #475569;",
+                tags$b("Multiomics Co-Assay Guidance: "),
+                "Multiomics benchmarking evaluates 4 count matrices concurrently (Real RNA+ATAC, Sim RNA+ATAC). For cloud execution, pre-filter peaksets to the top 5,000 - 8,000 most accessible peaks for optimal responsiveness."
               )
             )
+          )
         )
       )
     )
   ),
   
   # ============================================================================
-  # TAB 7: CONTACT
+  # TAB 7: CONTACT (ELEGANT SCIENTIFIC AFFILIATION)
   # ============================================================================
   nav_panel(
     "Contact",
@@ -2282,43 +2297,43 @@ ui <- page_navbar(
           card_body(
             # Institute Header Section
             div(
-              style = "margin-bottom: 25px; padding: 22px 15px; background: #FFFFFF; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 6px rgba(0,0,0,0.04);",
+              style = "margin-bottom: 22px; padding: 18px 20px; background: #FFFFFF; border-radius: 10px; border: 1px solid #E2E8F0; box-shadow: 0 1px 4px rgba(0,0,0,0.03);",
               div(
                 class = "row align-items-center",
                 div(
                   class = "col-md-2 text-center mb-3 mb-md-0",
-                  tags$img(src = "scfigures/icar_logo.jpg", height = 125, width = 125, style = "border-radius: 12px; object-fit: contain; box-shadow: 0 2px 6px rgba(0,0,0,0.08);")
+                  tags$img(src = "scfigures/icar_logo.jpg", height = 95, width = 95, style = "border-radius: 10px; object-fit: contain;")
                 ),
                 div(
                   class = "col-md-8 text-center",
-                  p("Division of Agricultural Bioinformatics", style = "font-size: 28px; color: #DA9100; margin-bottom: 4px; font-weight: 800; font-family: 'Segoe UI', Arial, sans-serif;"),
-                  p("ICAR - Indian Agricultural Statistics Research Institute (IASRI)", style = "font-size: 22px; color: #85754E; margin-bottom: 4px; font-weight: 700; font-family: 'Segoe UI', Arial, sans-serif;"),
-                  p("New Delhi, India", style = "font-size: 19px; color: #85754E; margin-bottom: 0px; font-weight: 600; font-family: 'Segoe UI', Arial, sans-serif;")
+                  h4("Division of Agricultural Bioinformatics", style = "font-size: 1.35rem; color: #1E3A8A; margin-bottom: 3px; font-weight: 700;"),
+                  h5("ICAR - Indian Agricultural Statistics Research Institute (IASRI)", style = "font-size: 1.10rem; color: #334155; margin-bottom: 3px; font-weight: 600;"),
+                  p("New Delhi, India", style = "font-size: 0.95rem; color: #64748B; margin-bottom: 0; font-weight: 500;")
                 ),
                 div(
                   class = "col-md-2 text-center mt-3 mt-md-0",
-                  tags$img(src = "scfigures/iasri_logo.png", height = 125, width = 125, style = "border-radius: 12px; object-fit: contain; box-shadow: 0 2px 6px rgba(0,0,0,0.08);")
+                  tags$img(src = "scfigures/iasri_logo.png", height = 95, width = 95, style = "border-radius: 10px; object-fit: contain;")
                 )
               )
             ),
             
             # Author Team Grid: Row 1 (3 Authors)
             div(
-              class = "row justify-content-center g-4 my-2",
+              class = "row justify-content-center g-3 my-2",
               
               # 1. Kabilan S
               div(
                 class = "col-md-4 col-sm-6 text-center",
                 div(
-                  class = "info-card",
-                  tags$img(src = "scfigures/kabilan.JPG", height = 180, width = 140, style = "border-radius: 12px; border: 2.5px solid #3D0C02; object-fit: cover; box-shadow: 0 4px 8px rgba(0,0,0,0.12);"),
-                  p("Kabilan S.", style = "font-size: 16px; margin-top: 10px; margin-bottom: 2px; font-weight: 700; color: #0F172A;"),
-                  p("Ph.D. Bioinformatics", style = "font-size: 13.5px; margin-bottom: 6px; font-weight: 600; color: #1B4F72;"),
+                  class = "info-card", style = "background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px 12px; height: 100%; box-shadow: 0 1px 3px rgba(0,0,0,0.03);",
+                  tags$img(src = "scfigures/kabilan.JPG", height = 165, width = 135, style = "border-radius: 10px; border: 2px solid #E2E8F0; object-fit: cover;"),
+                  p("Kabilan S.", style = "font-size: 0.96rem; margin-top: 10px; margin-bottom: 2px; font-weight: 700; color: #0F172A;"),
+                  p("Ph.D. Bioinformatics", style = "font-size: 0.82rem; margin-bottom: 6px; font-weight: 600; color: #0284C7;"),
                   p(
                     tags$a(
                       href = "mailto:kabilan151414@gmail.com",
-                      style = "font-size: 12px; color: #475569; text-decoration: none;",
-                      tags$i(class = "fas fa-envelope", style = "color: #1B4F72; margin-right: 4px;"),
+                      style = "font-size: 0.78rem; color: #64748B; text-decoration: none;",
+                      icon("envelope", class = "me-1 text-primary"),
                       "kabilan151414@gmail.com"
                     ),
                     style = "margin-bottom: 0;"
@@ -2330,15 +2345,15 @@ ui <- page_navbar(
               div(
                 class = "col-md-4 col-sm-6 text-center",
                 div(
-                  class = "info-card",
-                  tags$img(src = "scfigures/mishra_sir.jpg", height = 180, width = 140, style = "border-radius: 12px; border: 2.5px solid #3D0C02; object-fit: cover; box-shadow: 0 4px 8px rgba(0,0,0,0.12);"),
-                  p("Dr Dwijesh Chandra Mishra", style = "font-size: 16px; margin-top: 10px; margin-bottom: 2px; font-weight: 700; color: #0F172A;"),
-                  p("Senior Scientist", style = "font-size: 13.5px; margin-bottom: 6px; font-weight: 600; color: #1B4F72;"),
+                  class = "info-card", style = "background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px 12px; height: 100%; box-shadow: 0 1px 3px rgba(0,0,0,0.03);",
+                  tags$img(src = "scfigures/mishra_sir.jpg", height = 165, width = 135, style = "border-radius: 10px; border: 2px solid #E2E8F0; object-fit: cover;"),
+                  p("Dr Dwijesh Chandra Mishra", style = "font-size: 0.96rem; margin-top: 10px; margin-bottom: 2px; font-weight: 700; color: #0F172A;"),
+                  p("Senior Scientist", style = "font-size: 0.82rem; margin-bottom: 6px; font-weight: 600; color: #0284C7;"),
                   p(
                     tags$a(
                       href = "mailto:dwij.mishra@gmail.com",
-                      style = "font-size: 12px; color: #475569; text-decoration: none;",
-                      tags$i(class = "fas fa-envelope", style = "color: #1B4F72; margin-right: 4px;"),
+                      style = "font-size: 0.78rem; color: #64748B; text-decoration: none;",
+                      icon("envelope", class = "me-1 text-primary"),
                       "dwij.mishra@gmail.com"
                     ),
                     style = "margin-bottom: 0;"
@@ -2350,15 +2365,15 @@ ui <- page_navbar(
               div(
                 class = "col-md-4 col-sm-6 text-center",
                 div(
-                  class = "info-card",
-                  tags$img(src = "scfigures/sb_lal_sir.JPG", height = 180, width = 140, style = "border-radius: 12px; border: 2.5px solid #3D0C02; object-fit: cover; box-shadow: 0 4px 8px rgba(0,0,0,0.12);"),
-                  p("Dr Shashi Bhushan Lal", style = "font-size: 16px; margin-top: 10px; margin-bottom: 2px; font-weight: 700; color: #0F172A;"),
-                  p("Principal Scientist", style = "font-size: 13.5px; margin-bottom: 6px; font-weight: 600; color: #1B4F72;"),
+                  class = "info-card", style = "background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px 12px; height: 100%; box-shadow: 0 1px 3px rgba(0,0,0,0.03);",
+                  tags$img(src = "scfigures/sb_lal_sir.JPG", height = 165, width = 135, style = "border-radius: 10px; border: 2px solid #E2E8F0; object-fit: cover;"),
+                  p("Dr Shashi Bhushan Lal", style = "font-size: 0.96rem; margin-top: 10px; margin-bottom: 2px; font-weight: 700; color: #0F172A;"),
+                  p("Principal Scientist", style = "font-size: 0.82rem; margin-bottom: 6px; font-weight: 600; color: #0284C7;"),
                   p(
                     tags$a(
                       href = "mailto:sblall16@gmail.com",
-                      style = "font-size: 12px; color: #475569; text-decoration: none;",
-                      tags$i(class = "fas fa-envelope", style = "color: #1B4F72; margin-right: 4px;"),
+                      style = "font-size: 0.78rem; color: #64748B; text-decoration: none;",
+                      icon("envelope", class = "me-1 text-primary"),
                       "sblall16@gmail.com"
                     ),
                     style = "margin-bottom: 0;"
@@ -2369,21 +2384,21 @@ ui <- page_navbar(
             
             # Author Team Grid: Row 2 (3 Authors)
             div(
-              class = "row justify-content-center g-4 my-2",
+              class = "row justify-content-center g-3 my-2",
               
               # 4. Dr Sudhir Srivastava
               div(
                 class = "col-md-4 col-sm-6 text-center",
                 div(
-                  class = "info-card",
-                  tags$img(src = "scfigures/sudhir_sir.JPG", height = 180, width = 140, style = "border-radius: 12px; border: 2.5px solid #3D0C02; object-fit: cover; box-shadow: 0 4px 8px rgba(0,0,0,0.12);"),
-                  p("Dr Sudhir Srivastava", style = "font-size: 16px; margin-top: 10px; margin-bottom: 2px; font-weight: 700; color: #0F172A;"),
-                  p("Senior Scientist", style = "font-size: 13.5px; margin-bottom: 6px; font-weight: 600; color: #1B4F72;"),
+                  class = "info-card", style = "background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px 12px; height: 100%; box-shadow: 0 1px 3px rgba(0,0,0,0.03);",
+                  tags$img(src = "scfigures/sudhir_sir.JPG", height = 165, width = 135, style = "border-radius: 10px; border: 2px solid #E2E8F0; object-fit: cover;"),
+                  p("Dr Sudhir Srivastava", style = "font-size: 0.96rem; margin-top: 10px; margin-bottom: 2px; font-weight: 700; color: #0F172A;"),
+                  p("Senior Scientist", style = "font-size: 0.82rem; margin-bottom: 6px; font-weight: 600; color: #0284C7;"),
                   p(
                     tags$a(
                       href = "mailto:sudhir0401bm@gmail.com",
-                      style = "font-size: 12px; color: #475569; text-decoration: none;",
-                      tags$i(class = "fas fa-envelope", style = "color: #1B4F72; margin-right: 4px;"),
+                      style = "font-size: 0.78rem; color: #64748B; text-decoration: none;",
+                      icon("envelope", class = "me-1 text-primary"),
                       "sudhir0401bm@gmail.com"
                     ),
                     style = "margin-bottom: 0;"
@@ -2395,15 +2410,15 @@ ui <- page_navbar(
               div(
                 class = "col-md-4 col-sm-6 text-center",
                 div(
-                  class = "info-card",
-                  tags$img(src = "scfigures/kkcsir.JPG", height = 180, width = 140, style = "border-radius: 12px; border: 2.5px solid #3D0C02; object-fit: cover; box-shadow: 0 4px 8px rgba(0,0,0,0.12);"),
-                  p("Dr Krishna Kumar Chaturvedi", style = "font-size: 16px; margin-top: 10px; margin-bottom: 2px; font-weight: 700; color: #0F172A;"),
-                  p("Principal Scientist", style = "font-size: 13.5px; margin-bottom: 6px; font-weight: 600; color: #1B4F72;"),
+                  class = "info-card", style = "background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px 12px; height: 100%; box-shadow: 0 1px 3px rgba(0,0,0,0.03);",
+                  tags$img(src = "scfigures/kkcsir.JPG", height = 165, width = 135, style = "border-radius: 10px; border: 2px solid #E2E8F0; object-fit: cover;"),
+                  p("Dr Krishna Kumar Chaturvedi", style = "font-size: 0.96rem; margin-top: 10px; margin-bottom: 2px; font-weight: 700; color: #0F172A;"),
+                  p("Principal Scientist", style = "font-size: 0.82rem; margin-bottom: 6px; font-weight: 600; color: #0284C7;"),
                   p(
                     tags$a(
                       href = "mailto:kkcchaturvedi@gmail.com",
-                      style = "font-size: 12px; color: #475569; text-decoration: none;",
-                      tags$i(class = "fas fa-envelope", style = "color: #1B4F72; margin-right: 4px;"),
+                      style = "font-size: 0.78rem; color: #64748B; text-decoration: none;",
+                      icon("envelope", class = "me-1 text-primary"),
                       "kkcchaturvedi@gmail.com"
                     ),
                     style = "margin-bottom: 0;"
@@ -2415,15 +2430,15 @@ ui <- page_navbar(
               div(
                 class = "col-md-4 col-sm-6 text-center",
                 div(
-                  class = "info-card",
-                  tags$img(src = "scfigures/sharan_photo.jpg", height = 180, width = 140, style = "border-radius: 12px; border: 2.5px solid #3D0C02; object-fit: cover; box-shadow: 0 4px 8px rgba(0,0,0,0.12);"),
-                  p("Dr Sharanbasappa", style = "font-size: 16px; margin-top: 10px; margin-bottom: 2px; font-weight: 700; color: #0F172A;"),
-                  p("Scientist", style = "font-size: 13.5px; margin-bottom: 6px; font-weight: 600; color: #1B4F72;"),
+                  class = "info-card", style = "background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px 12px; height: 100%; box-shadow: 0 1px 3px rgba(0,0,0,0.03);",
+                  tags$img(src = "scfigures/sharan_photo.jpg", height = 165, width = 135, style = "border-radius: 10px; border: 2px solid #E2E8F0; object-fit: cover;"),
+                  p("Dr Sharanbasappa", style = "font-size: 0.96rem; margin-top: 10px; margin-bottom: 2px; font-weight: 700; color: #0F172A;"),
+                  p("Scientist", style = "font-size: 0.82rem; margin-bottom: 6px; font-weight: 600; color: #0284C7;"),
                   p(
                     tags$a(
                       href = "mailto:smadival509@gmail.com",
-                      style = "font-size: 12px; color: #475569; text-decoration: none;",
-                      tags$i(class = "fas fa-envelope", style = "color: #1B4F72; margin-right: 4px;"),
+                      style = "font-size: 0.78rem; color: #64748B; text-decoration: none;",
+                      icon("envelope", class = "me-1 text-primary"),
                       "smadival509@gmail.com"
                     ),
                     style = "margin-bottom: 0;"
@@ -2434,17 +2449,17 @@ ui <- page_navbar(
             
             # Feedback & GitHub Box
             div(
-              style = "text-align: center; font-size: 15.5px; color: #1A1A1A; font-family: Arial, sans-serif; margin: 35px auto 20px auto; max-width: 900px; padding: 16px 20px; background: linear-gradient(135deg, #F8FAFC, #EDF2F7); border: 1px solid #CBD5E1; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.04);",
-              strong("💬 For feedback, bug reports, or suggestions for improvements,"),
-              tags$br(),
-              "please contact us through our GitHub repository: ",
-              tags$a(href = "https://github.com/kabilanbio/scSimEval", target = "_blank", style = "color: #007BFF; text-decoration: none; font-weight: 700;", "🔗 https://github.com/kabilanbio/scSimEval")
+              style = "text-align: center; font-size: 0.88rem; color: #334155; margin: 26px auto 16px auto; max-width: 850px; padding: 14px 18px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px;",
+              icon("github", class = "me-2 text-dark"),
+              strong("For feedback, feature requests, or issue reports: "),
+              "visit our GitHub repository at ",
+              tags$a(href = "https://github.com/kabilanbio/scSimEval", target = "_blank", style = "color: #0284C7; text-decoration: none; font-weight: 600;", "github.com/kabilanbio/scSimEval")
             ),
             
             # Footer Note
             div(
-              style = "font-size: 13.5px; text-align: center; color: #1D2951; font-family: Calibri, sans-serif; background: linear-gradient(135deg, #F4F0EC, #E8E4E0); border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; margin-top: 15px;",
-              strong("🔬 Division of Agricultural Bioinformatics, ICAR-Indian Agricultural Statistics Research Institute, New Delhi, India.")
+              style = "font-size: 0.80rem; text-align: center; color: #64748B; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px; margin-top: 10px;",
+              span(icon("microscope", class = "me-1 text-primary"), tags$strong("Division of Agricultural Bioinformatics, ICAR-IASRI, New Delhi, India."))
             )
           )
         )
