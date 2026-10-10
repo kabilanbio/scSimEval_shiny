@@ -859,127 +859,160 @@ ui <- page_navbar(
   # ============================================================================
   nav_panel(
     "Home",
-    fluidRow(
-      column(
-        12,
+    div(
+      style = "max-width: 1240px; margin: 0 auto; padding: 10px 0 30px 0;",
+      
+      # 1. Clean Scientific Hero Section
+      div(
+        style = "background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); color: #F8FAFC; border-radius: 12px; padding: 34px 38px; margin-bottom: 24px; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.10); border: 1px solid #334155;",
         div(
-          class = "hero-box",
-          h2("scSimEval: Single-Cell & Multiomics Simulation Benchmarking Studio", style = "font-weight: 800; font-size: 1.85rem; letter-spacing: -0.5px;"),
-          p("A unified scientific framework for evaluating and comparing single-cell transcriptomics (scRNA-seq), chromatin accessibility (scATAC-seq), and paired multiomics simulation techniques against empirical biological reference datasets.", style = "font-size: 1.05rem; opacity: 0.95; max-width: 1050px; line-height: 1.5;"),
-          hr(style = "border-color: rgba(255,255,255,0.25); margin: 18px 0;"),
+          style = "max-width: 920px;",
           div(
-            actionButton("btn_go_data", "1. Data Upload & Evaluation", class = "btn btn-outline-light me-2 mb-2", icon = icon("database")),
-            actionButton("btn_go_bubble", "2. Comparative Bubble Matrix", class = "btn btn-success me-2 mb-2", icon = icon("chart-pie")),
-            actionButton("btn_go_viz", "3. Diagnostic Visualizations", class = "btn btn-info text-white me-2 mb-2", icon = icon("chart-line")),
-            actionButton("btn_go_download", "4. Download Results", class = "btn btn-outline-light me-2 mb-2", icon = icon("download")),
-            actionButton("btn_go_help", "5. Help & Manual", class = "btn btn-outline-light me-2 mb-2", icon = icon("book-open")),
-            actionButton("btn_go_contact", "6. Team & Contact", class = "btn btn-outline-light mb-2", icon = icon("users"))
-          )
-        )
-      )
-    ),
-    fluidRow(
-      column(3, div(class = "stat-card", style = "border-left-color: #1E3A8A;", div(class = "stat-number", style = "color: #1E3A8A;", "62"), div(class = "stat-label", "Curated Evaluation Measures"))),
-      column(3, div(class = "stat-card", style = "border-left-color: #0D9488;", div(class = "stat-number", style = "color: #0D9488;", "8"), div(class = "stat-label", "Canonical Biological Categories"))),
-      column(3, div(class = "stat-card", style = "border-left-color: #4F46E5;", div(class = "stat-number", style = "color: #4F46E5;", "3"), div(class = "stat-label", "Supported Data Modalities"))),
-      column(3, div(class = "stat-card", style = "border-left-color: #0284C7;", div(class = "stat-number", style = "color: #0284C7;", "0 – 1"), div(class = "stat-label", "Standardized Fidelity Scale")))
-    ),
-    fluidRow(
-      column(
-        7,
-        card(
-          card_header("Eight Evaluation Categories"),
-          card_body(
-            tags$div(
-              style = "margin-bottom: 14px;",
-              tags$span(class = "category-pill", style = "background-color: #2563EB;", "(I) Distributional Properties (14 metrics)"),
-              tags$span(class = "category-pill", style = "background-color: #0D9488;", "(II) Correlations & Zero-Inflation (6 metrics)"),
-              tags$span(class = "category-pill", style = "background-color: #B91C1C;", "(III) Cellular Structure & Concordance (10 metrics)"),
-              tags$span(class = "category-pill", style = "background-color: #D97706;", "(IV) Batch Effects & Confounder Mixing (7 metrics)"),
-              tags$span(class = "category-pill", style = "background-color: #C2410C;", "(V) Biological Signal & Downstream Fidelity (15 metrics)"),
-              tags$span(class = "category-pill", style = "background-color: #7C3AED;", "(VI) Trajectory & Lineage Dynamics (2 metrics)"),
-              tags$span(class = "category-pill", style = "background-color: #334155;", "(VII) Cross-Modal Coupling & Modularity (6 metrics)"),
-              tags$span(class = "category-pill", style = "background-color: #15803D;", "(VIII) Computational Scalability (2 metrics)")
-            ),
-            hr(),
-            h5("Evaluation Methodology", style = "font-weight: 700; color: #1E293B;"),
-            p("The scSimEval framework systematically benchmarks simulation tools across biological, technical, and computational dimensions. By comparing simulated single-cell profiles directly against genuine empirical reference data, it quantifies how faithfully synthetic datasets reproduce true biological properties."),
-            p("All raw metrics are transformed through direction-aware standardization to a common [0, 1] scale, allowing seamless multi-metric synthesis, visual matrix comparisons, and objective method rankings.", style = "margin-bottom: 0;")
+            style = "display: inline-flex; align-items: center; gap: 8px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 20px; padding: 4px 14px; margin-bottom: 14px;",
+            icon("dna", style = "color: #38BDF8; font-size: 0.82rem;"),
+            span("Single-Cell & Multiomics Simulation Benchmarking", style = "color: #38BDF8; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;")
+          ),
+          h2(
+            "scSimEval Studio",
+            style = "font-weight: 800; font-size: 2.1rem; letter-spacing: -0.03em; color: #FFFFFF; margin-bottom: 10px;"
+          ),
+          p(
+            "A unified, ground-truth-free framework for multi-metric fidelity benchmarking of synthetic single-cell transcriptomics (scRNA-seq), chromatin accessibility (scATAC-seq), and paired multiomics datasets against empirical biological references.",
+            style = "font-size: 1.02rem; color: #CBD5E1; line-height: 1.6; margin-bottom: 22px;"
+          ),
+          div(
+            style = "display: flex; flex-wrap: wrap; gap: 10px; align-items: center;",
+            actionButton("btn_go_data", "Explore Benchmark (Data Hub)", class = "btn btn-primary px-3 py-2", icon = icon("database"), style = "background: #2563EB; border: none; font-weight: 600; font-size: 0.9rem;"),
+            actionButton("btn_go_bubble", "Comparative Bubble Matrix", class = "btn btn-outline-light px-3 py-2", icon = icon("chart-pie"), style = "font-weight: 600; font-size: 0.9rem; border-color: #64748B;"),
+            actionButton("btn_go_viz", "Diagnostic Visualizations", class = "btn btn-outline-light px-3 py-2", icon = icon("chart-line"), style = "font-weight: 600; font-size: 0.9rem; border-color: #64748B;"),
+            actionButton("btn_go_help", "Methodology & Guide", class = "btn btn-link text-light px-2 py-2", icon = icon("book-open"), style = "font-size: 0.88rem; text-decoration: none;")
           )
         )
       ),
-      column(
-        5,
-        card(
-          card_header("Standardized Benchmarking Workflow"),
-          card_body(
-            div(class = "guide-step",
-                div(class = "guide-num", "1"),
-                tags$b("Data Upload & Evaluation: "),
-                "Explore pre-computed benchmarks for 6 simulators or upload your own biological reference counts and simulated datasets (single-cell or multiomics modalities)."
+      
+      # 2. Minimalist KPI Metrics Ribbon
+      fluidRow(
+        column(3, div(class = "stat-card", style = "border: 1px solid #E2E8F0; border-left: 3px solid #2563EB; padding: 14px 18px; border-radius: 8px; background: #FFFFFF; margin-bottom: 22px;",
+                      div(class = "stat-number", style = "color: #0F172A; font-size: 1.85rem; font-weight: 800; font-family: monospace;", "62"),
+                      div(class = "stat-label", style = "color: #64748B; font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px;", "Evaluation Measures"))),
+        column(3, div(class = "stat-card", style = "border: 1px solid #E2E8F0; border-left: 3px solid #0D9488; padding: 14px 18px; border-radius: 8px; background: #FFFFFF; margin-bottom: 22px;",
+                      div(class = "stat-number", style = "color: #0F172A; font-size: 1.85rem; font-weight: 800; font-family: monospace;", "8"),
+                      div(class = "stat-label", style = "color: #64748B; font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px;", "Biological Dimensions"))),
+        column(3, div(class = "stat-card", style = "border: 1px solid #E2E8F0; border-left: 3px solid #7C3AED; padding: 14px 18px; border-radius: 8px; background: #FFFFFF; margin-bottom: 22px;",
+                      div(class = "stat-number", style = "color: #0F172A; font-size: 1.85rem; font-weight: 800; font-family: monospace;", "3"),
+                      div(class = "stat-label", style = "color: #64748B; font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px;", "Modalities (RNA / ATAC / Co-Assay)"))),
+        column(3, div(class = "stat-card", style = "border: 1px solid #E2E8F0; border-left: 3px solid #D97706; padding: 14px 18px; border-radius: 8px; background: #FFFFFF; margin-bottom: 22px;",
+                      div(class = "stat-number", style = "color: #0F172A; font-size: 1.85rem; font-weight: 800; font-family: monospace;", "0.0 – 1.0"),
+                      div(class = "stat-label", style = "color: #64748B; font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px;", "Normalized Fidelity Scale")))
+      ),
+      
+      # 3. Two Balanced Scientific Cards
+      fluidRow(
+        column(
+          7,
+          card(
+            style = "border: 1px solid #E2E8F0; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); margin-bottom: 20px;",
+            card_header(
+              div(style = "display: flex; align-items: center; justify-content: space-between;",
+                  span(icon("layer-group", class = "me-2 text-primary"), tags$b("Evaluation Framework (8 Biological Categories)")),
+                  span(class = "badge bg-light text-secondary border", style = "font-size: 0.75rem;", "62 Measures Total"))
             ),
-            div(class = "guide-step",
-                div(class = "guide-num", "2"),
-                tags$b("Comparative Synthesis: "),
-                "Examine the 62-metric bubble matrix comparing all simulators side-by-side, along with the automated performance leaderboard."
-            ),
-            div(class = "guide-step",
-                div(class = "guide-num", "3"),
-                tags$b("Diagnostic & Publication Deliverables: "),
-                "Inspect category summaries, distribution QC, PCA/MDS ordinations, and export high-resolution (600 DPI) figures and Excel workbooks."
+            card_body(
+              style = "padding: 20px;",
+              div(
+                style = "display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px;",
+                div(style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 9px 12px;",
+                    div(tags$b("I. Distributional Properties"), style = "font-size: 0.83rem; color: #1E293B; margin-bottom: 2px;"),
+                    div("Gene/cell moments, library sparsity (14)", style = "font-size: 0.75rem; color: #64748B;")),
+                div(style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 9px 12px;",
+                    div(tags$b("II. Correlations & Zeros"), style = "font-size: 0.83rem; color: #1E293B; margin-bottom: 2px;"),
+                    div("Gene-gene, cell-cell, kinetic noise (6)", style = "font-size: 0.75rem; color: #64748B;")),
+                div(style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 9px 12px;",
+                    div(tags$b("III. Cellular Structure"), style = "font-size: 0.83rem; color: #1E293B; margin-bottom: 2px;"),
+                    div("Clustering ARI/NMI, silhouettes, k-NN (10)", style = "font-size: 0.75rem; color: #64748B;")),
+                div(style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 9px 12px;",
+                    div(tags$b("IV. Batch & Technical Mixing"), style = "font-size: 0.83rem; color: #1E293B; margin-bottom: 2px;"),
+                    div("kBET, CMS, LISI confounder alignment (7)", style = "font-size: 0.75rem; color: #64748B;")),
+                div(style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 9px 12px;",
+                    div(tags$b("V. Biological Downstream"), style = "font-size: 0.83rem; color: #1E293B; margin-bottom: 2px;"),
+                    div("DEG precision/recall, DV, pathway enrichment (15)", style = "font-size: 0.75rem; color: #64748B;")),
+                div(style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 9px 12px;",
+                    div(tags$b("VI. Lineage Dynamics"), style = "font-size: 0.83rem; color: #1E293B; margin-bottom: 2px;"),
+                    div("Pseudotime Spearman/Kendall concordances (2)", style = "font-size: 0.75rem; color: #64748B;")),
+                div(style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 9px 12px;",
+                    div(tags$b("VII. Cross-Modal Coupling"), style = "font-size: 0.83rem; color: #1E293B; margin-bottom: 2px;"),
+                    div("Peak-gene links, FOSCTTM, Match@1 (6)", style = "font-size: 0.75rem; color: #64748B;")),
+                div(style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 9px 12px;",
+                    div(tags$b("VIII. Scalability"), style = "font-size: 0.83rem; color: #1E293B; margin-bottom: 2px;"),
+                    div("Compute duration & peak memory efficiency (2)", style = "font-size: 0.75rem; color: #64748B;"))
+              ),
+              p(
+                "All metrics are standardized onto a direction-aware [0, 1] fidelity scale, where 1.0 represents perfect concordance with empirical biology. This enables unbiased ranking across simulator architectures without ground-truth labels.",
+                style = "font-size: 0.85rem; color: #475569; margin-bottom: 0; line-height: 1.5;"
+              )
             )
           )
-        )
-      )
-    ),
-    
-    fluidRow(
-      column(
-        12,
-        div(
-          class = "alert alert-warning",
-          style = "border-left: 5px solid #F59E0B; background-color: #FFFBEB; color: #78350F; border-radius: 9px; padding: 18px 22px; margin-top: 15px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);",
-          div(
-            style = "display: flex; align-items: flex-start;",
-            div(style = "font-size: 1.6rem; color: #D97706; margin-right: 16px; margin-top: 2px;", icon("server")),
-            div(
-              h5(tags$b("Computational Scalability & Multiomics Guidelines: Cloud Hosting vs. Local R Package"), style = "margin-top: 0; margin-bottom: 8px; color: #92400E; font-weight: 800;"),
-              p(
-                "The web-hosted studio on Posit Connect Cloud operates on a server container allocated with ", tags$b("4 GB RAM and 1 CPU core"), ". It is optimized for interactive benchmarking, exploring the pre-computed 6-simulator results, and evaluating small-to-moderate datasets:",
-                style = "margin-bottom: 6px; font-size: 0.93rem; line-height: 1.5;"
-              ),
-              tags$ul(
-                style = "margin-bottom: 8px; padding-left: 20px; font-size: 0.91rem;",
-                tags$li(tags$b("Unimodal scRNA-seq: "), "recommended up to ~3,000 – 4,000 cells and ~2,000 – 3,000 genes (or top variable genes / HVGs)."),
-                tags$li(tags$b("Unimodal scATAC-seq: "), "recommended up to ~2,000 – 3,000 cells and ~5,000 – 8,000 accessible peaks.")
-              ),
+        ),
+        
+        column(
+          5,
+          card(
+            style = "border: 1px solid #E2E8F0; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); margin-bottom: 20px;",
+            card_header(
+              span(icon("network-wired", class = "me-2 text-primary"), tags$b("Benchmarking Pipeline"))
+            ),
+            card_body(
+              style = "padding: 20px;",
               div(
-                style = "background: rgba(245, 158, 11, 0.12); border: 1px dashed #D97706; border-radius: 6px; padding: 10px 14px; margin: 10px 0 12px 0;",
-                h6(tags$b("Single-Cell Multiomics (scRNA-seq + scATAC-seq) Possibilities & Architectural Limits:"), style = "margin: 0 0 6px 0; color: #B45309; font-weight: 700; font-size: 0.92rem;"),
-                p(tags$b("• Computational Possibilities: "), "Supports paired co-assays (e.g. 10x Multiome, SHARE-seq, SNARE-seq), unpaired profiling (separate cells from same tissue), and mosaic designs. Seamlessly computes Category 7 cross-modal coupling measures (peak-to-gene linkages, TF regulatory fidelity, cross-modal cell concordance, and RNA-ATAC cluster agreement) alongside all 8 unimodal evaluation categories for each biological layer.", style = "margin-bottom: 4px; font-size: 0.88rem;"),
-                p(tags$b("• Multiomics Memory Bottleneck: "), "Evaluating multiomics datasets requires loading ", tags$b("four simultaneous high-dimensional matrices"), " (Real RNA, Real ATAC, Simulated RNA, Simulated ATAC). Because chromatin accessibility peaksets typically feature 50,000–100,000+ genomic regions with extreme sparsity (>95–99% zeros), analyzing unfiltered genome-wide peaksets easily exceeds the 4GB RAM ceiling.", style = "margin-bottom: 4px; font-size: 0.88rem;"),
-                p(tags$b("• Cloud Multiomics Sizing Guide: "), "For smooth execution on this cloud instance, filter peak matrices to the top ", tags$b("5,000 – 8,000 promoter / enhancer / variable peaks"), " and keep cell counts to ", tags$b("~2,000 – 3,000 cells"), ". Filter out ultra-rare peaks (<1-2% cells) prior to upload to prevent out-of-memory crashes.", style = "margin-bottom: 0; font-size: 0.88rem;")
+                style = "display: flex; flex-direction: column; gap: 14px;",
+                div(
+                  style = "display: flex; gap: 12px; align-items: flex-start;",
+                  div(style = "flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: #EFF6FF; color: #2563EB; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; border: 1px solid #BFDBFE;", "1"),
+                  div(
+                    div(tags$b("Data Ingestion"), style = "font-size: 0.86rem; color: #0F172A;"),
+                    div("Load demo benchmark data (6 simulators) or upload count matrices (.rds, .csv, SingleCellExperiment, Seurat).", style = "font-size: 0.79rem; color: #64748B; line-height: 1.4;")
+                  )
+                ),
+                div(
+                  style = "display: flex; gap: 12px; align-items: flex-start;",
+                  div(style = "flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: #EFF6FF; color: #2563EB; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; border: 1px solid #BFDBFE;", "2"),
+                  div(
+                    div(tags$b("Evaluation & Ranking"), style = "font-size: 0.86rem; color: #0F172A;"),
+                    div("Automated execution of 62 fidelity measures across distributions, clustering, batch effects, and multiomics coupling.", style = "font-size: 0.79rem; color: #64748B; line-height: 1.4;")
+                  )
+                ),
+                div(
+                  style = "display: flex; gap: 12px; align-items: flex-start;",
+                  div(style = "flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: #EFF6FF; color: #2563EB; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; border: 1px solid #BFDBFE;", "3"),
+                  div(
+                    div(tags$b("Visual Analytics & Export"), style = "font-size: 0.86rem; color: #0F172A;"),
+                    div("Explore the comparative bubble matrix, diagnostic QC plots, ordinations, and export high-res figures and CSV/Excel reports.", style = "font-size: 0.79rem; color: #64748B; line-height: 1.4;")
+                  )
+                )
               ),
-              p(
-                tags$b("For large-scale single-cell & multiomics datasets "),
-                "(>5,000 – 50,000+ cells, 20,000+ genes, or full genome-wide peaksets with 50,000–150,000+ peaks), please use the inbuilt Shiny application in the ", tags$b("scSimEval"), " R package locally. Running locally leverages your workstation's full physical RAM (16–64+ GB) and multi-core CPU without cloud timeout or memory ceilings:",
-                style = "margin-bottom: 6px; font-size: 0.92rem; line-height: 1.5;"
-              ),
-              tags$pre(
-                style = "background: #FEF3C7; color: #78350F; border: 1px solid #FDE68A; padding: 8px 14px; border-radius: 6px; margin-bottom: 0; font-size: 0.85rem; font-family: monospace;",
-                '# Install and launch scSimEval Shiny Studio locally in R:\nremotes::install_github("kabilanbio/scSimEval")\nscSimEval::launch_scSimEval_app()'
+              hr(style = "margin: 18px 0 12px 0; border-color: #E2E8F0;"),
+              div(
+                style = "display: flex; justify-content: space-between; align-items: center;",
+                span("Ready to evaluate?", style = "font-size: 0.82rem; color: #64748B; font-weight: 500;"),
+                actionButton("btn_go_data_inline", "Go to Data Hub →", class = "btn btn-sm btn-outline-primary", style = "font-size: 0.8rem; font-weight: 600;")
               )
             )
           )
         )
+      ),
+      
+      # 4. Minimalist Academic Footer Note
+      div(
+        style = "margin-top: 10px; padding: 14px 18px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;",
+        div(
+          style = "font-size: 0.8rem; color: #64748B;",
+          tags$b("scSimEval"), " • Single-Cell & Multiomics Simulation Benchmarking Studio • Open-Source R Package"
+        ),
+        div(
+          style = "font-size: 0.8rem; color: #64748B;",
+          "Local Studio: ", tags$code("scSimEval::launch_scSimEval_app()", style = "background: #E2E8F0; color: #334155; padding: 2px 6px; border-radius: 4px; font-size: 0.76rem;")
+        )
       )
-    ),
-    # Fixed Floating Page View Counter Widget (Google Analytics)
-    div(
-      class = "pageview-box",
-      div(class = "pageview-title", icon("eye"), " Total Page Views"),
-      div(class = "pageview-count", textOutput("total_pageviews")),
-      div(style = "font-size: 10px; opacity: 0.75; margin-top: 3px; color: #64748B;", "All Time")
     )
   ),
   
