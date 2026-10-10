@@ -2243,41 +2243,6 @@ ui <- page_navbar(
                     downloadButton("dl_help_sample_batch_csv", "Download Example Batch (.csv)", class = "btn btn-sm btn-outline-success w-100", icon = icon("download"))
                   )
                 )
-              ),
-              div(
-                style = "margin-top: 14px; background: #F8FAFC; border-radius: 6px; padding: 12px 14px; border: 1px solid #E2E8F0;",
-                tags$b(icon("code", class = "me-1 text-secondary"), " How to Prepare Inputs in R:"),
-                tags$pre(
-                  paste(
-                    "# 1. Load built-in example metadata in R:",
-                    "data(example_scrna, package = \"scSimEval\")      # count matrices (60 genes x 80 cells)",
-                    "data(example_cell_types, package = \"scSimEval\")  # named vector of cell types",
-                    "data(example_batch_info, package = \"scSimEval\")  # named vector of batch labels",
-                    "",
-                    "# 2. Export Count Matrices from Seurat:",
-                    "# Reference matrix (genes x cells):",
-                    "write.csv(as.matrix(GetAssayData(seurat_ref, slot = \"counts\")), \"reference_counts.csv\")",
-                    "# Simulated matrix (genes x cells):",
-                    "write.csv(as.matrix(GetAssayData(seurat_sim, slot = \"counts\")), \"simulated_counts.csv\")",
-                    "",
-                    "# 3. Export Metadata from Seurat (2-column format):",
-                    "# Cell Types (Cell_ID, Cell_Type):",
-                    "write.csv(data.frame(Cell_ID = colnames(seurat_ref), Cell_Type = as.character(Idents(seurat_ref))),",
-                    "          \"cell_types.csv\", row.names = FALSE)",
-                    "# Batch Annotations (Cell_ID, Batch):",
-                    "write.csv(data.frame(Cell_ID = colnames(seurat_ref), Batch = as.character(seurat_ref$batch)),",
-                    "          \"batch_annotations.csv\", row.names = FALSE)",
-                    "",
-                    "# 4. Alternatively, export from SingleCellExperiment (SCE):",
-                    "write.csv(as.matrix(counts(sce_ref)), \"reference_counts.csv\")",
-                    "write.csv(data.frame(Cell_ID = colnames(sce_ref), Cell_Type = as.character(colData(sce_ref)$cell_type)),",
-                    "          \"cell_types.csv\", row.names = FALSE)",
-                    "write.csv(data.frame(Cell_ID = colnames(sce_ref), Batch = as.character(colData(sce_ref)$batch)),",
-                    "          \"batch_annotations.csv\", row.names = FALSE)",
-                    sep = "\n"
-                  ),
-                  style = "font-size: 0.76rem; background: #FFFFFF; border: 1px solid #CBD5E1; padding: 10px 12px; border-radius: 6px; margin: 8px 0 0 0; line-height: 1.45; overflow-x: auto; color: #1E293B;"
-                )
               )
             ),
             # Section 5: Online Documentation Box
@@ -2591,34 +2556,6 @@ server <- function(input, output, session) {
               tags$pre("Cell_ID,Batch\nCell_01,Batch1\nCell_02,Batch2\nCell_03,Batch1\nCell_04,Batch2\n...", style = "font-size: 0.76rem; background: #FFFFFF; border: 1px solid #CBD5E1; padding: 8px; border-radius: 4px; margin-bottom: 10px;"),
               downloadButton("dl_modal_batch_csv", "Download Example Batch (.csv)", class = "btn btn-sm btn-outline-success w-100", icon = icon("download"))
             )
-          )
-        ),
-        div(
-          style = "background: #F1F5F9; border-radius: 6px; padding: 12px 14px; margin-top: 6px;",
-          tags$b(icon("code", class = "me-1 text-secondary"), " How to Prepare in R (Seurat / SingleCellExperiment):"),
-          tags$pre(
-            paste(
-              "# --- Option A: Export from Seurat ---",
-              "# Cell Types (Cell_ID, Cell_Type):",
-              "write.csv(data.frame(Cell_ID = colnames(seurat_obj), Cell_Type = as.character(Idents(seurat_obj))),",
-              "          \"cell_types.csv\", row.names = FALSE)",
-              "# Batch Labels (Cell_ID, Batch):",
-              "write.csv(data.frame(Cell_ID = colnames(seurat_obj), Batch = as.character(seurat_obj$batch)),",
-              "          \"batch_annotations.csv\", row.names = FALSE)",
-              "",
-              "# --- Option B: Export from SingleCellExperiment ---",
-              "write.csv(data.frame(Cell_ID = colnames(sce), Cell_Type = as.character(colData(sce)$cell_type)),",
-              "          \"cell_types.csv\", row.names = FALSE)",
-              "write.csv(data.frame(Cell_ID = colnames(sce), Batch = as.character(colData(sce)$batch)),",
-              "          \"batch_annotations.csv\", row.names = FALSE)",
-              "",
-              "# --- Option C: Inspect Built-in Example Data in R ---",
-              "data(example_cell_types, package = \"scSimEval\")",
-              "data(example_batch_info, package = \"scSimEval\")",
-              "head(example_cell_types)  # named vector of 80 cells",
-              sep = "\n"
-            ),
-            style = "font-size: 0.76rem; background: #FFFFFF; border: 1px solid #CBD5E1; padding: 10px; border-radius: 4px; margin: 6px 0 0 0; line-height: 1.45; overflow-x: auto; color: #1E293B;"
           )
         )
       )
