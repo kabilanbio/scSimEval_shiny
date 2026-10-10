@@ -1066,27 +1066,40 @@ ui <- page_navbar(
     layout_sidebar(
       sidebar = sidebar(
         width = 330,
-        title = div(icon("sliders"), " Matrix Display Options"),
+        title = div(icon("sliders"), " Display & Filters"),
         
-        # 1. Preset Selector: effortless 1-click filtering for fresh users
+        # 1. Two Top-Level Filter Options (Minimalist & Direct)
         radioButtons(
-          "rad_bubble_preset", tags$b("Filter Preset:"),
+          "rad_bubble_filter_mode", tags$b("Filter Mode:"),
           choices = c(
-            "All 62 Measures (Full Benchmark)"  = "all",
-            "Executive Core (8 Key Metrics)"     = "core",
-            "Biological Fidelity Focus"          = "bio",
-            "Custom Selection..."                = "custom"
+            "All 62 Measures"  = "all",
+            "Custom Selection" = "custom"
           ),
           selected = "all"
         ),
         
-        # 2. Granular Filter: only visible when 'custom' is chosen
+        # 2. User-Friendly Custom Selection Panel (Only visible when 'custom' is active)
         conditionalPanel(
-          condition = "input.rad_bubble_preset == 'custom'",
+          condition = "input.rad_bubble_filter_mode == 'custom'",
           div(
-            style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px; margin-top: 4px; margin-bottom: 10px;",
-            uiOutput("ui_bubble_cat_picker"),
-            uiOutput("ui_bubble_metric_picker")
+            style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; margin-top: 4px; margin-bottom: 12px;",
+            uiOutput("ui_custom_category_picker"),
+            div(
+              class = "d-flex justify-content-between align-items-center mt-2 mb-1",
+              tags$b("2. Select Metrics:", style = "font-size: 0.88rem; color: #1E293B;"),
+              div(
+                actionLink("btn_custom_metrics_all", "All", style = "font-size: 0.78rem; margin-right: 6px; font-weight: 600; text-decoration: none;"),
+                actionLink("btn_custom_metrics_none", "Clear", style = "font-size: 0.78rem; color: #dc3545; text-decoration: none;")
+              )
+            ),
+            div(
+              style = "max-height: 190px; overflow-y: auto; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 10px;",
+              uiOutput("ui_custom_metrics_checklist")
+            ),
+            div(
+              style = "margin-top: 5px; font-size: 0.76rem; color: #64748B; text-align: right;",
+              textOutput("txt_custom_metrics_count", inline = TRUE)
+            )
           )
         ),
         
@@ -1097,7 +1110,7 @@ ui <- page_navbar(
         
         hr(style = "margin: 10px 0;"),
         
-        # 4. Collapsible Sizing Controls
+        # 4. Collapsible Dimension Sliders (Hidden by default to avoid visual clutter)
         accordion(
           open = FALSE,
           accordion_panel(
@@ -1105,7 +1118,7 @@ ui <- page_navbar(
             value = "panel_dimensions",
             sliderInput("sld_bubble_width", "Matrix Width (px):", min = 800, max = 3200, value = 2200, step = 50),
             sliderInput("sld_bubble_height", "Matrix Height (px):", min = 350, max = 1200, value = 680, step = 20),
-            p("Dimensions scale automatically according to metric count, or customize manually above.", style = "font-size: 0.78rem; color: #64748B; margin-bottom: 0;")
+            p("Dimensions automatically adjust according to metric count, or customize manually above.", style = "font-size: 0.78rem; color: #64748B; margin-bottom: 0;")
           )
         ),
         
@@ -3364,7 +3377,8 @@ server <- function(input, output, session) {
 
   # ----------------------------------------------------------------------------
   # ----------------------------------------------------------------------------
-  # Tab 3: Comparative Bubble Matrix & Leaderboard (Minimalist & Dynamic)
+  # ----------------------------------------------------------------------------
+  # Tab 3: Comparative Bubble Matrix & Leaderboard (Minimalist & User-Friendly)
   # ----------------------------------------------------------------------------
   output$ui_bubble_active_badge <- renderUI({
     df <- filtered_bubble_data()
@@ -3373,8 +3387,8 @@ server <- function(input, output, session) {
     }
     n_m <- length(unique(df$Metric))
     n_s <- length(unique(df$Method))
-    preset <- input$rad_bubble_preset %||% "all"
-    lbl <- if (identical(preset, "core")) "Executive Core" else if (identical(preset, "bio")) "Biological Focus" else if (identical(preset, "custom")) "Custom Selection" else "All 62 Measures"
+    mode <- input$rad_bubble_filter_mode %||% "all"
+    lbl <- if (identical(mode, "custom")) "Custom Selection" else "All 62 Measures"
     span(class = "badge bg-primary", style = "font-size: 0.8rem; font-weight: 500;",
          sprintf("%s: %d Metrics across %d Simulators", lbl, n_m, n_s))
   })
@@ -3407,7 +3421,7 @@ server <- function(input, output, session) {
     updateCheckboxGroupInput(session, "sel_bubble_methods", selected = character(0))
   })
 
-  output$ui_bubble_cat_picker <- renderUI({
+  output$ui_custom_category_picker <- renderUI({
     req(rv$benchmark_df)
     df <- rv$benchmark_df
     cats <- if ("Category" %in% colnames(df)) {
@@ -3427,131 +3441,53 @@ server <- function(input, output, session) {
     } else {
       character(0)
     }
-    if (length(cats) == 0 && "Category" %in% colnames(df)) cats <- unique(df$Category)
-
-    div(
-      div(
-        class = "d-flex justify-content-between align-items-center mb-1",
-        tags$b("Categories:"),
-        div(
-          actionLink("btn_bubble_cats_all", "All", style = "font-size: 0.78rem; margin-right: 6px; text-decoration: none; font-weight: 600;"),
-          actionLink("btn_bubble_cats_none", "Clear", style = "font-size: 0.78rem; text-decoration: none; color: #dc3545;")
-        )
-      ),
-      selectizeInput(
-        "sel_bubble_cats", NULL,
-        choices = cats,
-        selected = cats,
-        multiple = TRUE,
-        options = list(
-          plugins = list("remove_button"),
-          placeholder = "Choose categories..."
-        )
-      )
-    )
+    choices <- c("All Categories (All Measures)" = "all", cats)
+    selectInput("sel_custom_cat", "1. Filter by Category:", choices = choices, selected = "all")
   })
 
-  observeEvent(input$btn_bubble_cats_all, {
+  output$ui_custom_metrics_checklist <- renderUI({
     req(rv$benchmark_df)
     df <- rv$benchmark_df
-    canon_order <- c(
-      "(I) Distributional Properties",
-      "(II) Correlations & Zero-Inflation",
-      "(III) Cellular Structure & Concordance",
-      "(IV) Batch Effects & Confounder Mixing",
-      "(V) Biological Signal & Downstream Fidelity",
-      "(VI) Trajectory & Lineage Dynamics",
-      "(VII) Cross-Modal Coupling & Modularity",
-      "(VIII) Computational Scalability"
-    )
-    cats <- if ("Category" %in% colnames(df)) intersect(canon_order, unique(df$Category)) else unique(df$Category)
-    updateSelectizeInput(session, "sel_bubble_cats", selected = cats)
-  })
-
-  observeEvent(input$btn_bubble_cats_none, {
-    updateSelectizeInput(session, "sel_bubble_cats", selected = character(0))
-  })
-
-  output$ui_bubble_metric_picker <- renderUI({
-    req(rv$benchmark_df)
-    df <- rv$benchmark_df
-    chosen_cats <- input$sel_bubble_cats
+    cat_chosen <- input$sel_custom_cat %||% "all"
     
-    if (!is.null(chosen_cats) && length(chosen_cats) > 0 && "Category" %in% colnames(df)) {
-      sub_df <- df[df$Category %in% chosen_cats, , drop = FALSE]
+    sub_df <- if (identical(cat_chosen, "all") || !"Category" %in% colnames(df)) {
+      df
     } else {
-      sub_df <- df
+      df[df$Category == cat_chosen, , drop = FALSE]
     }
     
     avail_metrics <- unique(as.character(sub_df$Metric))
     avail_metrics <- avail_metrics[!is.na(avail_metrics) & trimws(avail_metrics) != ""]
     
-    div(
-      div(
-        class = "d-flex justify-content-between align-items-center mb-1 mt-2",
-        tags$b("Specific Metrics:"),
-        div(
-          actionLink("btn_bubble_metrics_all", "All", style = "font-size: 0.78rem; margin-right: 6px; text-decoration: none; font-weight: 600;"),
-          actionLink("btn_bubble_metrics_none", "Clear", style = "font-size: 0.78rem; text-decoration: none; color: #dc3545;")
-        )
-      ),
-      selectizeInput(
-        "sel_bubble_metrics", NULL,
-        choices = avail_metrics,
-        selected = avail_metrics,
-        multiple = TRUE,
-        options = list(
-          plugins = list("remove_button"),
-          placeholder = "Choose metrics...",
-          maxOptions = 100
-        )
-      ),
-      div(
-        style = "font-size: 0.78rem; color: #64748B; margin-top: -6px;",
-        textOutput("txt_bubble_metric_count", inline = TRUE)
-      )
+    checkboxGroupInput(
+      "chk_custom_metrics", NULL,
+      choices = avail_metrics,
+      selected = avail_metrics
     )
   })
 
-  output$txt_bubble_metric_count <- renderText({
-    n_sel <- length(input$sel_bubble_metrics)
-    n_total <- if (!is.null(rv$benchmark_df)) length(unique(rv$benchmark_df$Metric)) else 0
-    sprintf("Active: %d / %d metrics", n_sel, n_total)
-  })
-
-  observeEvent(input$btn_bubble_metrics_all, {
+  output$txt_custom_metrics_count <- renderText({
+    n_sel <- length(input$chk_custom_metrics)
     req(rv$benchmark_df)
     df <- rv$benchmark_df
-    chosen_cats <- input$sel_bubble_cats
-    if (!is.null(chosen_cats) && length(chosen_cats) > 0 && "Category" %in% colnames(df)) {
-      sub_df <- df[df$Category %in% chosen_cats, , drop = FALSE]
-    } else {
-      sub_df <- df
-    }
-    avail_metrics <- unique(as.character(sub_df$Metric))
-    updateSelectizeInput(session, "sel_bubble_metrics", selected = avail_metrics)
+    cat_chosen <- input$sel_custom_cat %||% "all"
+    sub_df <- if (identical(cat_chosen, "all") || !"Category" %in% colnames(df)) df else df[df$Category == cat_chosen, , drop = FALSE]
+    n_cat <- length(unique(sub_df$Metric))
+    sprintf("%d / %d metrics selected", n_sel, n_cat)
   })
 
-  observeEvent(input$btn_bubble_metrics_none, {
-    updateSelectizeInput(session, "sel_bubble_metrics", selected = character(0))
-  })
-
-  observeEvent(input$sel_bubble_cats, {
+  observeEvent(input$btn_custom_metrics_all, {
     req(rv$benchmark_df)
     df <- rv$benchmark_df
-    chosen_cats <- input$sel_bubble_cats
-    if (!is.null(chosen_cats) && length(chosen_cats) > 0 && "Category" %in% colnames(df)) {
-      sub_df <- df[df$Category %in% chosen_cats, , drop = FALSE]
-    } else {
-      sub_df <- df
-    }
+    cat_chosen <- input$sel_custom_cat %||% "all"
+    sub_df <- if (identical(cat_chosen, "all") || !"Category" %in% colnames(df)) df else df[df$Category == cat_chosen, , drop = FALSE]
     avail_metrics <- unique(as.character(sub_df$Metric))
-    avail_metrics <- avail_metrics[!is.na(avail_metrics) & trimws(avail_metrics) != ""]
-    current_selected <- input$sel_bubble_metrics
-    new_selected <- if (is.null(current_selected)) avail_metrics else intersect(current_selected, avail_metrics)
-    if (length(new_selected) == 0 && length(avail_metrics) > 0) new_selected <- avail_metrics
-    updateSelectizeInput(session, "sel_bubble_metrics", choices = avail_metrics, selected = new_selected)
-  }, ignoreInit = TRUE)
+    updateCheckboxGroupInput(session, "chk_custom_metrics", selected = avail_metrics)
+  })
+
+  observeEvent(input$btn_custom_metrics_none, {
+    updateCheckboxGroupInput(session, "chk_custom_metrics", selected = character(0))
+  })
 
   filtered_bubble_data <- reactive({
     req(rv$benchmark_df)
@@ -3563,62 +3499,19 @@ server <- function(input, output, session) {
       df <- df[df$Method %in% input$sel_bubble_methods, , drop = FALSE]
     }
     
-    # 2. Preset Filter
-    preset <- input$rad_bubble_preset %||% "all"
+    # 2. Mode Filter: 'all' vs 'custom'
+    mode <- input$rad_bubble_filter_mode %||% "all"
     
-    if (identical(preset, "all")) {
-      # Use all metrics
-    } else if (identical(preset, "core")) {
-      avail_m <- unique(as.character(df$Metric))
-      core_candidates <- c(
-        "KS", "Wasserstein",
-        "mean_variance_r2", "bcv_discrepancy",
-        "ari", "silhouette_sim",
-        "batch_silhouette", "seurat_mixing_metric",
-        "SimBench_DE_Fidelity_Score", "Top_DEG_Jaccard_Overlap",
-        "pseudotime_correlation", "tree_height_rmse",
-        "FOSCTTM", "cross_modal_F1",
-        "elapsed_time_seconds", "peak_memory_mb"
-      )
-      cat_map <- if (exists(".METRIC_CATEGORY_MAP", envir = asNamespace("scSimEval"))) {
-        get(".METRIC_CATEGORY_MAP", envir = asNamespace("scSimEval"))
-      } else {
-        NULL
+    if (identical(mode, "custom")) {
+      cat_chosen <- input$sel_custom_cat %||% "all"
+      if (!identical(cat_chosen, "all") && "Category" %in% colnames(df)) {
+        df <- df[df$Category == cat_chosen, , drop = FALSE]
       }
-      chosen <- c()
-      for (m in core_candidates) {
-        if (m %in% avail_m) {
-          if (!is.null(cat_map) && !is.na(cat_map[m])) {
-            cat_i <- cat_map[m]
-            if (!any(cat_map[chosen] == cat_i, na.rm = TRUE)) chosen <- c(chosen, m)
-          } else {
-            chosen <- c(chosen, m)
-          }
-        }
-      }
-      if (length(chosen) == 0) chosen <- head(avail_m, 8)
-      df <- df[df$Metric %in% chosen, , drop = FALSE]
-    } else if (identical(preset, "bio")) {
-      bio_cats <- c(
-        "(I) Distributional Properties",
-        "(III) Cellular Structure & Concordance",
-        "(V) Biological Signal & Downstream Fidelity",
-        "(VI) Trajectory & Lineage Dynamics"
-      )
-      if ("Category" %in% colnames(df)) {
-        df <- df[df$Category %in% bio_cats, , drop = FALSE]
-      }
-    } else if (identical(preset, "custom")) {
-      if (!is.null(input$sel_bubble_cats)) {
-        if (length(input$sel_bubble_cats) == 0) return(NULL)
-        if ("Category" %in% colnames(df)) {
-          df <- df[df$Category %in% input$sel_bubble_cats, , drop = FALSE]
-        }
-      }
-      if (!is.null(input$sel_bubble_metrics)) {
-        if (length(input$sel_bubble_metrics) == 0) return(NULL)
+      
+      if (!is.null(input$chk_custom_metrics)) {
+        if (length(input$chk_custom_metrics) == 0) return(NULL)
         if ("Metric" %in% colnames(df)) {
-          df <- df[df$Metric %in% input$sel_bubble_metrics, , drop = FALSE]
+          df <- df[df$Metric %in% input$chk_custom_metrics, , drop = FALSE]
         }
       }
     }
@@ -3633,7 +3526,7 @@ server <- function(input, output, session) {
       p_empty <- ggplot2::ggplot() +
         ggplot2::annotate(
           "text", x = 1, y = 1,
-          label = "No metrics or simulators selected.\nPlease select at least one simulator or preset from the sidebar.",
+          label = "No metrics or simulators selected.\nPlease select at least one simulator or check metrics in Custom Selection.",
           size = 5.2, color = "#64748B", fontface = "italic"
         ) +
         ggplot2::theme_void() +
@@ -3654,11 +3547,11 @@ server <- function(input, output, session) {
     n_metrics <- length(unique(df$Metric))
     n_cats <- length(unique(df$Category))
     n_sims <- length(unique(df$Method))
-    preset <- input$rad_bubble_preset %||% "all"
-    preset_desc <- if (identical(preset, "core")) "Executive Core Benchmark (8 Key Measures)" else if (identical(preset, "bio")) "Biological Signal & Cellular Fidelity Focus" else if (identical(preset, "custom")) "Custom Evaluated Selection" else "All 62 Canonical Simulation Evaluation Measures"
+    mode <- input$rad_bubble_filter_mode %||% "all"
+    mode_desc <- if (identical(mode, "custom")) "Custom Selection Benchmark" else "Full Benchmark (All 62 Canonical Measures)"
     
     p + ggplot2::labs(
-      subtitle = sprintf("%s: %d Metric(s) across %d Category(ies) for %d Simulator(s)", preset_desc, n_metrics, n_cats, n_sims),
+      subtitle = sprintf("%s: %d Metric(s) across %d Category(ies) for %d Simulator(s)", mode_desc, n_metrics, n_cats, n_sims),
       caption = paste0(
         "Circle: standard performance (< 0.96)  |  Square: top performer (>= 0.96).\n",
         "All ", n_metrics, " metrics direction-normalized: for error/distance metrics, scores are inverted as 1 - norm(x) so 1.0 indicates closest agreement to empirical reference."
@@ -3669,9 +3562,8 @@ server <- function(input, output, session) {
   output$ui_bubble_plot_render <- renderUI({
     df <- filtered_bubble_data()
     n_m <- if (!is.null(df)) length(unique(df$Metric)) else 20
-    preset <- input$rad_bubble_preset %||% "all"
-    default_h <- if (identical(preset, "core")) 420 else max(420, min(1200, 160 + n_m * 22))
-    default_w <- if (identical(preset, "core")) 1500 else 2200
+    default_h <- max(380, min(1200, 160 + n_m * 22))
+    default_w <- if (n_m <= 10) 1400 else 2200
     h_val <- if (!is.null(input$sld_bubble_height)) input$sld_bubble_height else default_h
     w_val <- if (!is.null(input$sld_bubble_width)) input$sld_bubble_width else default_w
     plotOutput("plot_bubble_matrix", width = paste0(w_val, "px"), height = paste0(h_val, "px"))
@@ -3698,7 +3590,7 @@ server <- function(input, output, session) {
   output$table_leaderboard_dt <- renderDT({
     lb <- leaderboard_reactive()
     if (nrow(lb) == 0) {
-      return(datatable(data.frame(Notice = "No data selected for ranking. Please select simulators or a preset from the sidebar.")))
+      return(datatable(data.frame(Notice = "No data selected for ranking. Please select simulators or check metrics from the sidebar.")))
     }
     display_df <- lb
     colnames(display_df) <- c("Overall Rank", "Method", "Average Fidelity", "Fidelity Score")
