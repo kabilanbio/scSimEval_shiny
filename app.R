@@ -829,6 +829,50 @@ ui <- page_navbar(
         background: #FFFFFF;
       }
 
+      /* ===== GLOBAL APP-WIDE LOADING INDICATOR ===== */
+      .app-global-loader {
+        position: fixed;
+        top: 14px;
+        right: 22px;
+        background: linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%);
+        color: #FFFFFF;
+        padding: 8px 18px;
+        border-radius: 24px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.35);
+        z-index: 99999;
+        display: none;
+        align-items: center;
+        gap: 10px;
+        pointer-events: none;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        animation: pulseLoader 1.5s infinite alternate;
+      }
+      @keyframes pulseLoader {
+        from { transform: scale(1); }
+        to { transform: scale(1.03); }
+      }
+      html.shiny-busy .app-global-loader {
+        display: inline-flex !important;
+      }
+      .shiny-plot-output.recalculating,
+      .shiny-html-output.recalculating {
+        opacity: 0.35 !important;
+        filter: blur(1px);
+        transition: all 0.2s ease;
+      }
+      .plot-placeholder-card {
+        text-align: center;
+        padding: 48px 24px;
+        background: #F8FAFC;
+        border: 2px dashed #CBD5E1;
+        border-radius: 10px;
+        margin: 18px auto;
+        max-width: 640px;
+      }
+
       /* ===== PAGE VIEW COUNTER (Google Analytics) ===== */
       .pageview-box {
         position: fixed;
@@ -864,6 +908,12 @@ ui <- page_navbar(
       }
     "))
   ),
+    div(
+      id = "app_busy_pill",
+      class = "app-global-loader",
+      tags$span(class = "spinner-border spinner-border-sm text-light", role = "status", `aria-hidden` = "true"),
+      tags$span("Processing & Rendering...")
+    ),
   
   # ============================================================================
   # TAB 1: HOME
@@ -1155,6 +1205,17 @@ ui <- page_navbar(
         width = 330,
         title = div(icon("sliders", class = "me-2 text-primary"), tags$strong("Display & Filters")),
         
+        # Confirm & Plot Action Button
+        div(
+          class = "mb-3",
+          actionButton(
+            "btn_plot_bubble", "Confirm & Generate Plot",
+            icon = icon("chart-scatter"),
+            class = "btn btn-primary w-100",
+            style = "font-weight: 700; padding: 10px; font-size: 0.90rem; box-shadow: 0 2px 6px rgba(30,58,138,0.25);"
+          )
+        ),
+        
         # 1. Filter Mode
         radioButtons(
           "rad_bubble_filter_mode", tags$b("Filter Mode:"),
@@ -1287,15 +1348,18 @@ ui <- page_navbar(
           ),
           card_body(
             fluidRow(
-              column(4, checkboxInput("chk_sum_labels", "Show Score Labels", value = TRUE)),
-              column(4, checkboxInput("chk_sum_norm", "Normalize Scores [0, 1]", value = TRUE)),
-              column(4,
+              column(3,
+                     actionButton("btn_plot_sum", "Confirm & Plot", class = "btn btn-primary btn-sm w-100", icon = icon("chart-pie"), style = "font-weight: 600;")
+              ),
+              column(3, checkboxInput("chk_sum_labels", "Show Score Labels", value = TRUE)),
+              column(3, checkboxInput("chk_sum_norm", "Normalize Scores [0, 1]", value = TRUE)),
+              column(3,
                      downloadButton("download_sum_jpeg", "Download JPEG (600 DPI)", class = "btn btn-sm btn-primary me-2"),
                      downloadButton("download_sum_pdf", "Download PDF", class = "btn btn-sm btn-outline-secondary")
               )
             ),
             hr(),
-            plotOutput("plot_eval_summary", height = "540px")
+            uiOutput("ui_plot_eval_summary")
           )
         )
       ),
@@ -1313,9 +1377,12 @@ ui <- page_navbar(
           ),
           card_body(
             fluidRow(
-              column(4, selectInput("sel_dist_layout", "QC Layout:", choices = c("Comprehensive (14 Panels)" = "full", "Density Curves Only" = "density_only"), selected = "full")),
-              column(4, p("Compares gene expression, library sizes, and zeros between real reference data and simulated cells.", style = "font-size: 0.82rem; color: #64748B; margin-bottom: 0;")),
-              column(4,
+              column(3,
+                     actionButton("btn_plot_dist", "Confirm & Plot QC", class = "btn btn-primary btn-sm w-100", icon = icon("play"), style = "font-weight: 600;")
+              ),
+              column(3, selectInput("sel_dist_layout", "QC Layout:", choices = c("Comprehensive (14 Panels)" = "full", "Density Curves Only" = "density_only"), selected = "full")),
+              column(3, p("Compares gene expression, library sizes, and zeros between real reference data and simulated cells.", style = "font-size: 0.82rem; color: #64748B; margin-bottom: 0;")),
+              column(3,
                      downloadButton("download_dist_jpeg", "Download JPEG (600 DPI)", class = "btn btn-sm btn-primary me-2"),
                      downloadButton("download_dist_pdf", "Download PDF", class = "btn btn-sm btn-outline-secondary")
               )
@@ -1339,7 +1406,10 @@ ui <- page_navbar(
           ),
           card_body(
             fluidRow(
-              column(6,
+              column(3,
+                     actionButton("btn_plot_scale", "Confirm & Plot", class = "btn btn-primary btn-sm w-100", icon = icon("microchip"), style = "font-weight: 600;")
+              ),
+              column(5,
                      selectInput(
                        "sel_scale_type", "Scalability View:",
                        choices = c(
@@ -1352,13 +1422,13 @@ ui <- page_navbar(
                        selected = "composite"
                      )
               ),
-              column(6,
+              column(4,
                      downloadButton("download_scale_jpeg", "Download JPEG (600 DPI)", class = "btn btn-sm btn-primary me-2"),
                      downloadButton("download_scale_pdf", "Download PDF", class = "btn btn-sm btn-outline-secondary")
               )
             ),
             hr(),
-            plotOutput("plot_scale_bench", height = "620px")
+            uiOutput("ui_plot_scale_bench")
           )
         )
       ),
@@ -1377,12 +1447,15 @@ ui <- page_navbar(
           ),
           card_body(
             fluidRow(
-              column(12,
+              column(8,
                      radioButtons(
                        "opt_box_view_mode", "View Mode:",
                        choices = c("View Individual Metric" = "individual", "View by Category Group" = "category"),
                        selected = "individual", inline = TRUE
                      )
+              ),
+              column(4,
+                     actionButton("btn_plot_box", "Confirm & Plot Metric", class = "btn btn-primary btn-sm w-100", icon = icon("chart-column"), style = "font-weight: 600;")
               )
             ),
             fluidRow(
@@ -1464,6 +1537,9 @@ ui <- page_navbar(
           card_body(
             fluidRow(
               column(3,
+                     div(style = "margin-bottom: 8px;",
+                       actionButton("btn_plot_heat", "Confirm & Plot Heatmap", class = "btn btn-primary btn-sm w-100", icon = icon("table-cells"), style = "font-weight: 600;")
+                     ),
                      selectInput(
                        "sel_heat_cat", "Category Filter:",
                        choices = c(
@@ -1516,6 +1592,9 @@ ui <- page_navbar(
           card_body(
             fluidRow(
               column(3,
+                     div(style = "margin-bottom: 8px;",
+                       actionButton("btn_plot_pca", "Confirm & Plot PCA", class = "btn btn-primary btn-sm w-100", icon = icon("compass"), style = "font-weight: 600;")
+                     ),
                      selectInput(
                        "sel_pca_cat", "Category Filter:",
                        choices = c(
@@ -1576,6 +1655,9 @@ ui <- page_navbar(
           card_body(
             fluidRow(
               column(3,
+                     div(style = "margin-bottom: 8px;",
+                       actionButton("btn_plot_mds", "Confirm & Plot MDS", class = "btn btn-primary btn-sm w-100", icon = icon("circle-nodes"), style = "font-weight: 600;")
+                     ),
                      selectInput(
                        "sel_mds_cat", "Category Filter:",
                        choices = c(
@@ -1673,6 +1755,9 @@ ui <- page_navbar(
                      )
               ),
               column(3,
+                     div(class = "mb-2",
+                         actionButton("btn_plot_emb", "Compute & Render Embeddings", class = "btn btn-primary btn-sm w-100", icon = icon("project-diagram"), style = "font-weight: 600;")
+                     ),
                      fluidRow(
                        column(6, sliderInput("sld_emb_pt_size", "Point Size:", min = 0.2, max = 3.0, value = 1.0, step = 0.1)),
                        column(6, sliderInput("sld_emb_alpha", "Alpha:", min = 0.2, max = 1.0, value = 0.8, step = 0.05))
@@ -2564,6 +2649,50 @@ server <- function(input, output, session) {
     dataset_summary_df = NULL
   )
   
+  # Reactive tracking for user-confirmed plotting (prevents unwanted auto-plotting)
+  rv_plot_triggers <- reactiveValues(
+    bubble = 0,
+    sum    = 0,
+    dist   = 0,
+    scale  = 0,
+    box    = 0,
+    heat   = 0,
+    pca    = 0,
+    mds    = 0,
+    emb    = 0
+  )
+  
+  # Helper for clean confirmation placeholder
+  render_plot_placeholder <- function(title, desc, button_id, btn_label = "Confirm & Generate Plot", icon_name = "chart-simple") {
+    div(
+      class = "plot-placeholder-card",
+      icon(icon_name, class = "text-primary mb-3", style = "font-size: 2.6rem; opacity: 0.85;"),
+      h5(title, style = "font-weight: 700; color: #1E293B; margin-bottom: 8px;"),
+      p(desc, style = "color: #64748B; font-size: 0.86rem; line-height: 1.5; margin-bottom: 18px;"),
+      actionButton(button_id, btn_label, class = "btn btn-primary px-4 py-2", icon = icon("play"), style = "font-weight: 600; box-shadow: 0 2px 6px rgba(30,58,138,0.25);")
+    )
+  }
+  
+  # Plot confirmation observers for all 9 plots
+  observeEvent(input$btn_plot_bubble, { rv_plot_triggers$bubble <- rv_plot_triggers$bubble + 1 })
+  observeEvent(input$btn_plot_bubble_inline, { rv_plot_triggers$bubble <- rv_plot_triggers$bubble + 1 })
+  observeEvent(input$btn_plot_sum, { rv_plot_triggers$sum <- rv_plot_triggers$sum + 1 })
+  observeEvent(input$btn_plot_sum_inline, { rv_plot_triggers$sum <- rv_plot_triggers$sum + 1 })
+  observeEvent(input$btn_plot_dist, { rv_plot_triggers$dist <- rv_plot_triggers$dist + 1 })
+  observeEvent(input$btn_plot_dist_inline, { rv_plot_triggers$dist <- rv_plot_triggers$dist + 1 })
+  observeEvent(input$btn_plot_scale, { rv_plot_triggers$scale <- rv_plot_triggers$scale + 1 })
+  observeEvent(input$btn_plot_scale_inline, { rv_plot_triggers$scale <- rv_plot_triggers$scale + 1 })
+  observeEvent(input$btn_plot_box, { rv_plot_triggers$box <- rv_plot_triggers$box + 1 })
+  observeEvent(input$btn_plot_box_inline, { rv_plot_triggers$box <- rv_plot_triggers$box + 1 })
+  observeEvent(input$btn_plot_heat, { rv_plot_triggers$heat <- rv_plot_triggers$heat + 1 })
+  observeEvent(input$btn_plot_heat_inline, { rv_plot_triggers$heat <- rv_plot_triggers$heat + 1 })
+  observeEvent(input$btn_plot_pca, { rv_plot_triggers$pca <- rv_plot_triggers$pca + 1 })
+  observeEvent(input$btn_plot_pca_inline, { rv_plot_triggers$pca <- rv_plot_triggers$pca + 1 })
+  observeEvent(input$btn_plot_mds, { rv_plot_triggers$mds <- rv_plot_triggers$mds + 1 })
+  observeEvent(input$btn_plot_mds_inline, { rv_plot_triggers$mds <- rv_plot_triggers$mds + 1 })
+  observeEvent(input$btn_plot_emb, { rv_plot_triggers$emb <- rv_plot_triggers$emb + 1 })
+  observeEvent(input$btn_plot_emb_inline, { rv_plot_triggers$emb <- rv_plot_triggers$emb + 1 })
+  
   # Navigation triggers
   observeEvent(input$btn_go_data, { nav_select("nav_active", "Data Hub") })
   observeEvent(input$btn_go_data_inline, { nav_select("nav_active", "Data Hub") })
@@ -2768,6 +2897,7 @@ server <- function(input, output, session) {
       rv$dataset_summary_df <- init_demo_summary(initial_demo)
       
       updateCheckboxGroupInput(session, "sel_bubble_methods", choices = rv$methods, selected = rv$methods)
+      rv_plot_triggers$bubble <- 0; rv_plot_triggers$sum <- 0; rv_plot_triggers$dist <- 0; rv_plot_triggers$scale <- 0; rv_plot_triggers$box <- 0; rv_plot_triggers$heat <- 0; rv_plot_triggers$pca <- 0; rv_plot_triggers$mds <- 0; rv_plot_triggers$emb <- 0
       showNotification("Demo benchmark loaded successfully!", type = "message")
     } else {
       showNotification("Demo benchmark file not found on disk.", type = "warning")
@@ -2787,6 +2917,7 @@ server <- function(input, output, session) {
       rv$dataset_summary_df <- init_demo_summary(initial_demo)
       
       updateCheckboxGroupInput(session, "sel_bubble_methods", choices = rv$methods, selected = rv$methods)
+      rv_plot_triggers$bubble <- 0; rv_plot_triggers$sum <- 0; rv_plot_triggers$dist <- 0; rv_plot_triggers$scale <- 0; rv_plot_triggers$box <- 0; rv_plot_triggers$heat <- 0; rv_plot_triggers$pca <- 0; rv_plot_triggers$mds <- 0; rv_plot_triggers$emb <- 0
       showNotification("Demo benchmark loaded successfully!", type = "message")
     } else {
       showNotification("Demo benchmark file not found on disk.", type = "warning")
@@ -2913,6 +3044,7 @@ server <- function(input, output, session) {
         rv$source_name <- sprintf("Single-Cell Benchmark (%d Simulators)", length(rv$methods))
         
         updateCheckboxGroupInput(session, "sel_bubble_methods", choices = rv$methods, selected = rv$methods)
+        rv_plot_triggers$bubble <- 0; rv_plot_triggers$sum <- 0; rv_plot_triggers$dist <- 0; rv_plot_triggers$scale <- 0; rv_plot_triggers$box <- 0; rv_plot_triggers$heat <- 0; rv_plot_triggers$pca <- 0; rv_plot_triggers$mds <- 0; rv_plot_triggers$emb <- 0
         showNotification(sprintf("Single-cell evaluation complete! Evaluated %d simulator(s).", n_files), type = "message")
       }, error = function(e) {
         showNotification(paste("Evaluation error:", e$message), type = "error")
@@ -3766,6 +3898,7 @@ server <- function(input, output, session) {
   })
 
   bubble_plot_reactive <- reactive({
+    rv_plot_triggers$bubble
     df <- filtered_bubble_data()
     if (is.null(df) || nrow(df) == 0) {
       p_empty <- ggplot2::ggplot() +
@@ -3779,32 +3912,43 @@ server <- function(input, output, session) {
       return(p_empty)
     }
     
-    df <- standardize_benchmark_categories(df)
-    
-    p <- plot_benchmark_bubble_matrix(
-      data              = df,
-      base_size         = 11,
-      compact_strips    = TRUE,
-      show_missing_dots = FALSE,
-      normalize_scores  = TRUE
-    )
-    
-    n_metrics <- length(unique(df$Metric))
-    n_cats <- length(unique(df$Category))
-    n_sims <- length(unique(df$Method))
-    mode <- input$rad_bubble_filter_mode %||% "all"
-    mode_desc <- if (identical(mode, "custom")) "Custom Selection Benchmark" else "Full Benchmark (All 62 Canonical Measures)"
-    
-    p + ggplot2::labs(
-      subtitle = sprintf("%s: %d Metric(s) across %d Category(ies) for %d Simulator(s)", mode_desc, n_metrics, n_cats, n_sims),
-      caption = paste0(
-        "Circle: standard performance (< 0.96)  |  Square: top performer (>= 0.96).\n",
-        "All ", n_metrics, " metrics direction-normalized: for error/distance metrics, scores are inverted as 1 - norm(x) so 1.0 indicates closest agreement to empirical reference."
+    withProgress(message = "Rendering Comparative Bubble Matrix", detail = "Normalizing 62 metrics...", {
+      df <- standardize_benchmark_categories(df)
+      incProgress(0.5, detail = "Generating ggplot bubble matrix...")
+      p <- plot_benchmark_bubble_matrix(
+        data              = df,
+        base_size         = 11,
+        compact_strips    = TRUE,
+        show_missing_dots = FALSE,
+        normalize_scores  = TRUE
       )
-    )
+      
+      n_metrics <- length(unique(df$Metric))
+      n_cats <- length(unique(df$Category))
+      n_sims <- length(unique(df$Method))
+      mode <- input$rad_bubble_filter_mode %||% "all"
+      mode_desc <- if (identical(mode, "custom")) "Custom Selection Benchmark" else "Full Benchmark (All 62 Canonical Measures)"
+      
+      p + ggplot2::labs(
+        subtitle = sprintf("%s: %d Metric(s) across %d Category(ies) for %d Simulator(s)", mode_desc, n_metrics, n_cats, n_sims),
+        caption = paste0(
+          "Circle: standard performance (< 0.96)  |  Square: top performer (>= 0.96).\n",
+          "All ", n_metrics, " metrics direction-normalized: for error/distance metrics, scores are inverted as 1 - norm(x) so 1.0 indicates closest agreement to empirical reference."
+        )
+      )
+    })
   })
 
   output$ui_bubble_plot_render <- renderUI({
+    if (rv_plot_triggers$bubble == 0) {
+      return(render_plot_placeholder(
+        title = "Comparative Bubble Matrix Ready to Plot",
+        desc = "Choose your simulators and metric categories on the left, then click below to confirm and render the flagship comparative bubble matrix.",
+        button_id = "btn_plot_bubble_inline",
+        btn_label = "Confirm & Generate Bubble Matrix",
+        icon_name = "chart-scatter"
+      ))
+    }
     df <- filtered_bubble_data()
     n_m <- if (!is.null(df)) length(unique(df$Metric)) else 20
     default_h <- max(380, min(1200, 160 + n_m * 22))
@@ -3916,14 +4060,30 @@ server <- function(input, output, session) {
   # ----------------------------------------------------------------------------
   
   # 1. Evaluation Summary
+  output$ui_plot_eval_summary <- renderUI({
+    if (rv_plot_triggers$sum == 0) {
+      return(render_plot_placeholder(
+        title = "Evaluation Summary Ready to Plot",
+        desc = "Click below to confirm and render the radar and category-averaged performance summary bars.",
+        button_id = "btn_plot_sum_inline",
+        btn_label = "Confirm & Plot Evaluation Summary",
+        icon_name = "chart-pie"
+      ))
+    }
+    plotOutput("plot_eval_summary", height = "540px")
+  })
+  
   eval_summary_reactive <- reactive({
     req(rv$benchmark_df)
-    plot_evaluation_summary(
-      data = rv$benchmark_df,
-      show_labels = input$chk_sum_labels,
-      normalize_scores = input$chk_sum_norm,
-      base_size = 14
-    )
+    rv_plot_triggers$sum
+    withProgress(message = "Rendering Evaluation Summary", detail = "Aggregating category scores...", {
+      plot_evaluation_summary(
+        data = rv$benchmark_df,
+        show_labels = input$chk_sum_labels,
+        normalize_scores = input$chk_sum_norm,
+        base_size = 14
+      )
+    })
   })
   output$plot_eval_summary <- renderPlot({ eval_summary_reactive() })
   output$download_sum_jpeg <- downloadHandler(
@@ -3937,24 +4097,36 @@ server <- function(input, output, session) {
   
   # 2. Distribution QC
   output$ui_dist_qc_plot <- renderUI({
+    if (rv_plot_triggers$dist == 0) {
+      return(render_plot_placeholder(
+        title = "Distribution QC Comparison Ready",
+        desc = "Click below to confirm and compare gene expression, library size, and dropout density curves between reference and simulated datasets.",
+        button_id = "btn_plot_dist_inline",
+        btn_label = "Confirm & Plot Distribution QC",
+        icon_name = "chart-line"
+      ))
+    }
     plot_h <- if (identical(input$sel_dist_layout, "density_only") || identical(input$sel_dist_layout, "density")) "550px" else "850px"
     plotOutput("plot_dist_qc", height = plot_h)
   })
   dist_qc_reactive <- reactive({
     req(rv$toy_ref, rv$toy_sim)
-    lay <- if (!is.null(input$sel_dist_layout) && input$sel_dist_layout %in% c("full", "density_only", "grid_compact")) {
-      input$sel_dist_layout
-    } else if (identical(input$sel_dist_layout, "density")) {
-      "density_only"
-    } else {
-      "full"
-    }
-    plot_distribution_qc(
-      ref_data = rv$toy_ref,
-      sim_data = rv$toy_sim,
-      layout   = lay,
-      base_size = 13
-    )
+    rv_plot_triggers$dist
+    withProgress(message = "Rendering Distribution QC", detail = "Evaluating expression densities...", {
+      lay <- if (!is.null(input$sel_dist_layout) && input$sel_dist_layout %in% c("full", "density_only", "grid_compact")) {
+        input$sel_dist_layout
+      } else if (identical(input$sel_dist_layout, "density")) {
+        "density_only"
+      } else {
+        "full"
+      }
+      plot_distribution_qc(
+        ref_data = rv$toy_ref,
+        sim_data = rv$toy_sim,
+        layout   = lay,
+        base_size = 13
+      )
+    })
   })
   output$plot_dist_qc <- renderPlot({ dist_qc_reactive() })
   output$download_dist_jpeg <- downloadHandler(
@@ -3967,13 +4139,28 @@ server <- function(input, output, session) {
   )
   
   # 3. Scalability Benchmark
+  output$ui_plot_scale_bench <- renderUI({
+    if (rv_plot_triggers$scale == 0) {
+      return(render_plot_placeholder(
+        title = "Scalability Benchmark Ready to Plot",
+        desc = "Click below to confirm and visualize runtime (seconds) and memory usage (MB) across simulators.",
+        button_id = "btn_plot_scale_inline",
+        btn_label = "Confirm & Plot Scalability",
+        icon_name = "microchip"
+      ))
+    }
+    plotOutput("plot_scale_bench", height = "620px")
+  })
   scale_bench_reactive <- reactive({
     req(rv$benchmark_df)
-    plot_scalability_benchmark(
-      benchmark_data = rv$benchmark_df,
-      type = input$sel_scale_type,
-      base_size = 13
-    )
+    rv_plot_triggers$scale
+    withProgress(message = "Rendering Scalability Benchmark", detail = "Extracting computational metrics...", {
+      plot_scalability_benchmark(
+        benchmark_data = rv$benchmark_df,
+        type = input$sel_scale_type,
+        base_size = 13
+      )
+    })
   })
   output$plot_scale_bench <- renderPlot({ scale_bench_reactive() })
   output$download_scale_jpeg <- downloadHandler(
@@ -3995,36 +4182,48 @@ server <- function(input, output, session) {
   
   metric_box_reactive <- reactive({
     req(rv$benchmark_df)
-    if (identical(input$opt_box_view_mode, "individual")) {
-      req(input$sel_box_metric_single)
-      score_type_val <- if (!is.null(input$sel_box_indiv_score)) input$sel_box_indiv_score else "normalized"
-      plot_individual_metric_bar(
-        benchmark_data = rv$benchmark_df,
-        metric         = input$sel_box_metric_single,
-        score_type     = score_type_val,
-        base_size      = 12
-      )
-    } else {
-      if (identical(input$sel_box_cat_group, "all")) {
-        plot_metric_boxplots(
+    rv_plot_triggers$box
+    withProgress(message = "Rendering Metric Plots", detail = "Formatting metric scores...", {
+      if (identical(input$opt_box_view_mode, "individual")) {
+        req(input$sel_box_metric_single)
+        score_type_val <- if (!is.null(input$sel_box_indiv_score)) input$sel_box_indiv_score else "normalized"
+        plot_individual_metric_bar(
           benchmark_data = rv$benchmark_df,
-          categories     = NULL,
-          score_type     = input$sel_box_score_type,
-          facet_by       = "category",
-          base_size      = 11
+          metric         = input$sel_box_metric_single,
+          score_type     = score_type_val,
+          base_size      = 12
         )
       } else {
-        plot_category_metric_bars(
-          benchmark_data = rv$benchmark_df,
-          category       = input$sel_box_cat_group,
-          score_type     = input$sel_box_score_type,
-          base_size      = 11
-        )
+        if (identical(input$sel_box_cat_group, "all")) {
+          plot_metric_boxplots(
+            benchmark_data = rv$benchmark_df,
+            categories     = NULL,
+            score_type     = input$sel_box_score_type,
+            facet_by       = "category",
+            base_size      = 11
+          )
+        } else {
+          plot_category_metric_bars(
+            benchmark_data = rv$benchmark_df,
+            category       = input$sel_box_cat_group,
+            score_type     = input$sel_box_score_type,
+            base_size      = 11
+          )
+        }
       }
-    }
+    })
   })
 
   output$ui_plot_metric_boxes <- renderUI({
+    if (rv_plot_triggers$box == 0) {
+      return(render_plot_placeholder(
+        title = "Metric Plots Ready to Generate",
+        desc = "Choose your metric or category group, then click below to confirm and render comparison plots.",
+        button_id = "btn_plot_box_inline",
+        btn_label = "Confirm & Plot Metric",
+        icon_name = "chart-column"
+      ))
+    }
     h <- 560
     if (identical(input$opt_box_view_mode, "individual")) {
       h <- 520
@@ -4139,6 +4338,15 @@ server <- function(input, output, session) {
   }, ignoreInit = TRUE)
 
   output$ui_plot_metric_heat <- renderUI({
+    if (rv_plot_triggers$heat == 0) {
+      return(render_plot_placeholder(
+        title = "Performance Heatmap Ready to Plot",
+        desc = "Choose your category filter and dimensions, then click below to confirm and render the performance matrix.",
+        button_id = "btn_plot_heat_inline",
+        btn_label = "Confirm & Plot Heatmap",
+        icon_name = "table-cells"
+      ))
+    }
     w <- if (!is.null(input$sld_heat_width)) input$sld_heat_width else 880
     h <- if (!is.null(input$sld_heat_height)) input$sld_heat_height else 1100
     plotOutput("plot_metric_heat", width = paste0(w, "px"), height = paste0(h, "px"))
@@ -4146,15 +4354,18 @@ server <- function(input, output, session) {
 
   metric_heat_reactive <- reactive({
     req(rv$benchmark_df)
-    cat_sel <- if (identical(input$sel_heat_cat, "all")) NULL else input$sel_heat_cat
-    b_size <- if (is.null(cat_sel)) 9.5 else 11
-    plot_metric_heatmap(
-      benchmark_data = rv$benchmark_df,
-      category = cat_sel,
-      cluster_rows = FALSE,
-      cluster_cols = FALSE,
-      base_size = b_size
-    )
+    rv_plot_triggers$heat
+    withProgress(message = "Rendering Performance Heatmap", detail = "Formatting metric matrix...", {
+      cat_sel <- if (identical(input$sel_heat_cat, "all")) NULL else input$sel_heat_cat
+      b_size <- if (is.null(cat_sel)) 9.5 else 11
+      plot_metric_heatmap(
+        benchmark_data = rv$benchmark_df,
+        category = cat_sel,
+        cluster_rows = FALSE,
+        cluster_cols = FALSE,
+        base_size = b_size
+      )
+    })
   })
   output$plot_metric_heat <- renderPlot({ metric_heat_reactive() })
   output$download_heat_jpeg <- downloadHandler(
@@ -4194,6 +4405,15 @@ server <- function(input, output, session) {
   }, ignoreInit = TRUE)
 
   output$ui_plot_metric_pca <- renderUI({
+    if (rv_plot_triggers$pca == 0) {
+      return(render_plot_placeholder(
+        title = "PCA Ordination Ready to Plot",
+        desc = "Configure category filters and PCA view panels, then click below to confirm and compute principal component ordinations.",
+        button_id = "btn_plot_pca_inline",
+        btn_label = "Confirm & Plot PCA",
+        icon_name = "compass"
+      ))
+    }
     w <- if (!is.null(input$sld_pca_width)) input$sld_pca_width else 950
     h <- if (!is.null(input$sld_pca_height)) input$sld_pca_height else 1100
     plotOutput("plot_metric_pca_out", width = paste0(w, "px"), height = paste0(h, "px"))
@@ -4201,24 +4421,27 @@ server <- function(input, output, session) {
 
   metric_pca_reactive <- reactive({
     req(rv$benchmark_df)
-    cat_sel <- if (identical(input$sel_pca_cat, "all")) NULL else input$sel_pca_cat
-    n_top <- if (!is.null(input$num_pca_top_metrics) && is.finite(input$num_pca_top_metrics)) input$num_pca_top_metrics else 14
-    p_panel <- if (!is.null(input$sel_pca_panel) && input$sel_pca_panel %in% c("both", "methods", "loadings")) {
-      input$sel_pca_panel
-    } else if (identical(input$sel_pca_panel, "methods") || identical(input$sel_pca_panel, "scores") || identical(input$sel_pca_panel, "simulators")) {
-      "methods"
-    } else if (identical(input$sel_pca_panel, "loadings") || identical(input$sel_pca_panel, "scree")) {
-      "loadings"
-    } else {
-      "both"
-    }
-    plot_metric_pca(
-      benchmark_data = rv$benchmark_df,
-      category = cat_sel,
-      panel = p_panel,
-      top_n_loadings = n_top,
-      base_size = 12
-    )
+    rv_plot_triggers$pca
+    withProgress(message = "Computing PCA Ordination", detail = "Decomposing variance and loadings...", {
+      cat_sel <- if (identical(input$sel_pca_cat, "all")) NULL else input$sel_pca_cat
+      n_top <- if (!is.null(input$num_pca_top_metrics) && is.finite(input$num_pca_top_metrics)) input$num_pca_top_metrics else 14
+      p_panel <- if (!is.null(input$sel_pca_panel) && input$sel_pca_panel %in% c("both", "methods", "loadings")) {
+        input$sel_pca_panel
+      } else if (identical(input$sel_pca_panel, "methods") || identical(input$sel_pca_panel, "scores") || identical(input$sel_pca_panel, "simulators")) {
+        "methods"
+      } else if (identical(input$sel_pca_panel, "loadings") || identical(input$sel_pca_panel, "scree")) {
+        "loadings"
+      } else {
+        "both"
+      }
+      plot_metric_pca(
+        benchmark_data = rv$benchmark_df,
+        category = cat_sel,
+        panel = p_panel,
+        top_n_loadings = n_top,
+        base_size = 12
+      )
+    })
   })
   output$plot_metric_pca_out <- renderPlot({ metric_pca_reactive() })
   output$download_pca_jpeg <- downloadHandler(
@@ -4242,6 +4465,15 @@ server <- function(input, output, session) {
   
   # 7. MDS Metric Space (6 Category-wise options)
   output$ui_plot_metric_mds <- renderUI({
+    if (rv_plot_triggers$mds == 0) {
+      return(render_plot_placeholder(
+        title = "MDS Distance Projection Ready",
+        desc = "Configure distance metric comparison options, then click below to confirm and compute multi-dimensional scaling projection.",
+        button_id = "btn_plot_mds_inline",
+        btn_label = "Confirm & Plot MDS",
+        icon_name = "circle-nodes"
+      ))
+    }
     w <- if (!is.null(input$sld_mds_width)) input$sld_mds_width else 900
     h <- if (!is.null(input$sld_mds_height)) input$sld_mds_height else 620
     plotOutput("plot_metric_mds_out", width = paste0(w, "px"), height = paste0(h, "px"))
@@ -4249,20 +4481,23 @@ server <- function(input, output, session) {
 
   metric_mds_reactive <- reactive({
     req(rv$benchmark_df)
-    cat_sel <- if (identical(input$sel_mds_cat, "all")) NULL else input$sel_mds_cat
-    ord_by <- if (!is.null(input$sel_mds_by) && input$sel_mds_by %in% c("methods", "metrics")) {
-      input$sel_mds_by
-    } else if (identical(input$sel_mds_by, "summaries")) {
-      "metrics"
-    } else {
-      "methods"
-    }
-    plot_metric_mds(
-      benchmark_data = rv$benchmark_df,
-      category = cat_sel,
-      ordination_by = ord_by,
-      base_size = 13
-    )
+    rv_plot_triggers$mds
+    withProgress(message = "Computing MDS Metric Space", detail = "Calculating Euclidean distance coordinates...", {
+      cat_sel <- if (identical(input$sel_mds_cat, "all")) NULL else input$sel_mds_cat
+      ord_by <- if (!is.null(input$sel_mds_by) && input$sel_mds_by %in% c("methods", "metrics")) {
+        input$sel_mds_by
+      } else if (identical(input$sel_mds_by, "summaries")) {
+        "metrics"
+      } else {
+        "methods"
+      }
+      plot_metric_mds(
+        benchmark_data = rv$benchmark_df,
+        category = cat_sel,
+        ordination_by = ord_by,
+        base_size = 13
+      )
+    })
   })
   output$plot_metric_mds_out <- renderPlot({ metric_mds_reactive() })
   output$download_mds_jpeg <- downloadHandler(
@@ -4331,6 +4566,8 @@ server <- function(input, output, session) {
   # Reactive cell embeddings calculation
   reactive_cell_embeddings <- reactive({
     req(rv$toy_ref)
+    rv_plot_triggers$emb
+    withProgress(message = "Computing Cell Embeddings", detail = "Running low-dimensional projection...", {
     ref_mat <- rv$toy_ref
     sim_list <- if (!is.null(rv$sim_matrices) && length(rv$sim_matrices) > 0) {
       rv$sim_matrices
@@ -4356,6 +4593,7 @@ server <- function(input, output, session) {
       cell_types = rv$cell_types,
       batch = rv$batch
     )
+    })
   })
   
   # Reactive embedding plot
@@ -4388,6 +4626,15 @@ server <- function(input, output, session) {
   })
   
   output$ui_plot_cell_embeddings <- renderUI({
+    if (rv_plot_triggers$emb == 0) {
+      return(render_plot_placeholder(
+        title = "Cell Projections (UMAP, t-SNE, PCA) Ready",
+        desc = "Choose your dimensionality reduction method, layout, and clustering parameters, then click below to compute and display single-cell embeddings.",
+        button_id = "btn_plot_emb_inline",
+        btn_label = "Compute & Render Embeddings",
+        icon_name = "project-diagram"
+      ))
+    }
     lay <- if (!is.null(input$sel_emb_layout)) input$sel_emb_layout else "facet"
     n_methods <- if (lay == "side_by_side") 2 else max(2, length(input$chk_emb_methods) + 1)
     
@@ -4407,6 +4654,9 @@ server <- function(input, output, session) {
   output$table_emb_quality_metrics <- renderDT({
     validate(
       need(!is.null(rv$toy_ref), "Quality metrics require count matrices. Please upload matrices or load demo benchmark data.")
+    )
+    validate(
+      need(rv_plot_triggers$emb > 0, "Click Compute & Render Embeddings above to compute cluster separation and quality metrics.")
     )
     emb_data <- reactive_cell_embeddings()
     req(emb_data, nrow(emb_data) > 0)
