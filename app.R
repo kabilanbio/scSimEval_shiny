@@ -2579,7 +2579,7 @@ server <- function(input, output, session) {
   # ----------------------------------------------------------------------------
   output$total_pageviews <- renderText({
     # 1. Baseline cumulative all-time views (from launch through today)
-    baseline_views <- 18
+    baseline_views <- 0
     
     # Global process environment to track cumulative sessions across container lifetime
     if (!exists(".scSimEval_views_env", envir = .GlobalEnv)) {
@@ -2649,7 +2649,7 @@ server <- function(input, output, session) {
           if (nzchar(prop_id)) {
             df <- googleAnalyticsR::ga_data(
               propertyId = prop_id,
-              date_range = c("2024-01-01", "today"),
+              date_range = c("2026-10-10", "today"),
               metrics = "screenPageViews"
             )
             if (!is.null(df) && nrow(df) > 0 && "screenPageViews" %in% colnames(df)) {
