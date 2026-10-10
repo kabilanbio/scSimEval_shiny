@@ -878,14 +878,7 @@ ui <- page_navbar(
           ),
           p(
             "A unified, ground-truth-free framework for multi-metric fidelity benchmarking of synthetic single-cell transcriptomics (scRNA-seq), chromatin accessibility (scATAC-seq), and paired multiomics datasets against empirical biological references.",
-            style = "font-size: 1.02rem; color: #CBD5E1; line-height: 1.6; margin-bottom: 22px;"
-          ),
-          div(
-            style = "display: flex; flex-wrap: wrap; gap: 10px; align-items: center;",
-            actionButton("btn_go_data", "Explore Benchmark (Data Hub)", class = "btn btn-primary px-3 py-2", icon = icon("database"), style = "background: #2563EB; border: none; font-weight: 600; font-size: 0.9rem;"),
-            actionButton("btn_go_bubble", "Comparative Bubble Matrix", class = "btn btn-outline-light px-3 py-2", icon = icon("chart-pie"), style = "font-weight: 600; font-size: 0.9rem; border-color: #64748B;"),
-            actionButton("btn_go_viz", "Diagnostic Visualizations", class = "btn btn-outline-light px-3 py-2", icon = icon("chart-line"), style = "font-weight: 600; font-size: 0.9rem; border-color: #64748B;"),
-            actionButton("btn_go_help", "Methodology & Guide", class = "btn btn-link text-light px-2 py-2", icon = icon("book-open"), style = "font-size: 0.88rem; text-decoration: none;")
+            style = "font-size: 1.02rem; color: #CBD5E1; line-height: 1.6; margin-bottom: 0;"
           )
         )
       ),
