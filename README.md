@@ -15,8 +15,8 @@ The application is hosted on **Posit Connect Cloud**:
 
 ## 👥 Authors & Maintainers
 
-* **Sakthivel Kabilan** (Ph.D. Scholar, ICAR-IASRI, New Delhi) - [kabilan151414@gmail.com](mailto:kabilan151414@gmail.com)
-* **Dr. Dwijesh Chandra Mishra** (Senior Scientist, ICAR-IASRI)
+* **Kabilan Sakthivel** (Ph.D. Scholar, ICAR-IASRI, New Delhi) - [kabilan151414@gmail.com](mailto:kabilan151414@gmail.com)
+* **Dr. Dwijesh Chandra Mishra** (Principal Scientist, ICAR-IASRI)
 * **Dr. Shashi Bhushan Lal** (Principal Scientist, ICAR-IASRI)
 * **Dr. Sudhir Srivastava** (Senior Scientist, ICAR-IASRI)
 * **Dr. Krishna Kumar Chaturvedi** (Principal Scientist, ICAR-IASRI)
