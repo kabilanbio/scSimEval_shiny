@@ -1,5 +1,5 @@
 # inst/shiny/scSimEvalApp/app.R
-# Unified Single-Cell & Multiomics Simulation Benchmarking Studio
+# Simulation Evaluation Studio for scRNA-seq, scATAC-seq, and Single-Cell Multiomics
 # Powered by scSimEval (62 Curated Ground-Truth-Free Measures)
 
 library(shiny)
@@ -736,14 +736,14 @@ ui <- page_navbar(
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', '%s', {
-        'cookie_flags': 'SameSite=None;Secure'
+        'send_page_view': true,
+        'anonymize_ip': true
       });
       gtag('event', 'page_view', {
-        'page_title': 'scSimEval Shiny Studio',
+        'page_title': document.title,
         'page_location': window.location.href
       });
     ", ga_measurement_id, ga_measurement_id))),
-    
     tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"),
     tags$style(HTML("
       .navbar { box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-weight: 600; }
@@ -817,40 +817,6 @@ ui <- page_navbar(
         border-color: #3B82F6;
         background: #FFFFFF;
       }
-
-      /* ===== PAGE VIEW COUNTER (Google Analytics) ===== */
-      .pageview-box {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background-color: rgba(255, 255, 255, 0.96);
-        border: 1px solid #C5D5E6;
-        border-radius: 8px;
-        padding: 9px 14px;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.12);
-        z-index: 1050;
-        width: 165px;
-        text-align: center;
-        transition: all 0.25s ease;
-      }
-      .pageview-box:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 18px rgba(0,0,0,0.18);
-        border-color: #1B4F72;
-        background-color: #FFFFFF;
-      }
-      .pageview-title {
-        font-weight: 600;
-        margin-bottom: 3px;
-        font-size: 11.5px;
-        color: #475569;
-        letter-spacing: 0.3px;
-      }
-      .pageview-count {
-        font-size: 19px;
-        font-weight: 800;
-        color: #1B4F72;
-      }
     "))
   ),
   
@@ -870,14 +836,14 @@ ui <- page_navbar(
           div(
             style = "display: inline-flex; align-items: center; gap: 8px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 20px; padding: 4px 14px; margin-bottom: 14px;",
             icon("dna", style = "color: #38BDF8; font-size: 0.82rem;"),
-            span("Single-Cell & Multiomics Simulation Benchmarking", style = "color: #38BDF8; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;")
+            span("Simulation Evaluation • scRNA-seq • scATAC-seq • Multiomics", style = "color: #38BDF8; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;")
           ),
           h2(
             "scSimEval Studio",
             style = "font-weight: 800; font-size: 2.1rem; letter-spacing: -0.03em; color: #FFFFFF; margin-bottom: 10px;"
           ),
           p(
-            "A unified, ground-truth-free framework for multi-metric fidelity benchmarking of synthetic single-cell transcriptomics (scRNA-seq), chromatin accessibility (scATAC-seq), and paired multiomics datasets against empirical biological references.",
+            "This application is designed for simulation evaluation of single-cell RNA-seq (scRNA-seq), single-cell ATAC-seq (scATAC-seq), and single-cell multiomics (scRNA-seq + scATAC-seq) datasets by comparing them against real reference datasets across 62 evaluation measures without requiring known ground truth.",
             style = "font-size: 1.02rem; color: #CBD5E1; line-height: 1.6; margin-bottom: 0;"
           )
         )
@@ -971,7 +937,7 @@ ui <- page_navbar(
                   div(style = "flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: #EFF6FF; color: #2563EB; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; border: 1px solid #BFDBFE;", "2"),
                   div(
                     div(tags$b("Evaluation & Ranking"), style = "font-size: 0.86rem; color: #0F172A;"),
-                    div("Automated execution of 62 fidelity measures across distributions, clustering, batch effects, and multiomics coupling.", style = "font-size: 0.79rem; color: #64748B; line-height: 1.4;")
+                    div("Comprehensive evaluation of scRNA-seq, scATAC-seq, and multiomics simulations across 62 measures covering distributions, clustering, batch effects, and cross-modality coupling.", style = "font-size: 0.79rem; color: #64748B; line-height: 1.4;")
                   )
                 ),
                 div(
@@ -1863,11 +1829,11 @@ ui <- page_navbar(
             # Introduction Hero Callout
             div(
               style = "background: #F8FAFC; border-left: 4px solid #1B4F72; border-radius: 6px; padding: 18px 22px; margin-bottom: 24px;",
-              h4("Unified Evaluation & Benchmarking for Single-Cell Simulations", style = "font-weight: 800; color: #1B4F72; margin-top: 0; font-size: 1.18rem;"),
+              h4("Simulation Evaluation for Single-Cell and Multiomics Datasets", style = "font-weight: 800; color: #1B4F72; margin-top: 0; font-size: 1.18rem;"),
               p(
-                strong("scSimEval"), " is a scientific framework to test how well synthetic single-cell datasets reproduce real biological experiments. ",
-                "It provides a ground-truth-free evaluation pipeline with ", strong("62 evaluation metrics organized into 8 biological and computational categories"), 
-                " across single-cell RNA-seq, ATAC-seq, and paired multiomics."
+                strong("scSimEval"), " is designed for simulation evaluation of single-cell RNA-seq (scRNA-seq), single-cell ATAC-seq (scATAC-seq), and single-cell multiomics (scRNA-seq + scATAC-seq) datasets. ",
+                "It evaluates how well simulated datasets reproduce real biological reference data across ", strong("62 evaluation measures organized into 8 biological categories"), 
+                " without requiring known ground truth."
               ),
               p(
                 "This web application lets you load example benchmarks or upload your own datasets, calculate scores, compare simulators, and download publication-ready figures.",
@@ -2489,113 +2455,13 @@ server <- function(input, output, session) {
   
   # Navigation triggers
   observeEvent(input$btn_go_data, { nav_select("nav_active", "Data Hub") })
+  observeEvent(input$btn_go_data_inline, { nav_select("nav_active", "Data Hub") })
   observeEvent(input$btn_go_bubble, { nav_select("nav_active", "Comparative Bubble Matrix") })
   observeEvent(input$btn_go_viz, { nav_select("nav_active", "Visualizations") })
   observeEvent(input$btn_go_download, { nav_select("nav_active", "Download Results") })
   observeEvent(input$btn_go_help, { nav_select("nav_active", "Help & Getting Started") })
   observeEvent(input$btn_go_contact, { nav_select("nav_active", "Contact") })
-  
-  # ----------------------------------------------------------------------------
-  # Google Analytics: Live / Cached Page Views Counter
-  # ----------------------------------------------------------------------------
-  output$total_pageviews <- renderText({
-    # 1. Baseline cumulative all-time views (from launch through today)
-    baseline_views <- 18
-    
-    # Global process environment to track cumulative sessions across container lifetime
-    if (!exists(".scSimEval_views_env", envir = .GlobalEnv)) {
-      assign(".scSimEval_views_env", new.env(parent = emptyenv()), envir = .GlobalEnv)
-      .scSimEval_views_env$session_count <- 0
-      .scSimEval_views_env$ga_views <- 0
-      .scSimEval_views_env$last_ga_check <- 0
-    }
-    
-    # Increment session count within this running application instance
-    .scSimEval_views_env$session_count <- .scSimEval_views_env$session_count + 1
-    
-    # Read persisted cache file (if present)
-    cached_file_views <- baseline_views
-    cache_path <- "pageviews_cache.rds"
-    if (file.exists(cache_path)) {
-      try({
-        cached <- readRDS(cache_path)
-        if (is.numeric(cached) && cached >= baseline_views) {
-          cached_file_views <- cached
-        }
-      }, silent = TRUE)
-    }
-    
-    # 2. Query Google Analytics 4 (throttled to once every 5 minutes to avoid UI lag)
-    now_ts <- as.numeric(Sys.time())
-    if ((now_ts - .scSimEval_views_env$last_ga_check) > 300) {
-      .scSimEval_views_env$last_ga_check <- now_ts
-      
-      ga_key_content <- Sys.getenv("GA_KEY_JSON", "")
-      ga_key <- ""
-      if (nzchar(ga_key_content)) {
-        tmp_key <- tempfile(fileext = ".json")
-        try(writeLines(ga_key_content, tmp_key), silent = TRUE)
-        ga_key <- tmp_key
-      } else {
-        ga_key <- Sys.getenv("GA_AUTH_FILE", "")
-        if (!nzchar(ga_key)) {
-          candidates <- c(
-            "google_key.json",
-            file.path("www", "google_key.json"),
-            file.path("inst", "shiny", "scSimEvalApp", "google_key.json"),
-            file.path("inst", "shiny", "scSimEvalApp", "www", "google_key.json"),
-            file.path("..", "google_key.json"),
-            file.path("..", "..", "google_key.json")
-          )
-          for (cand in candidates) {
-            if (file.exists(cand)) {
-              ga_key <- cand
-              break
-            }
-          }
-        }
-      }
-      
-      prop_id <- Sys.getenv("GA_PROPERTY_ID", "557610038")
-      
-      if (nzchar(ga_key) && file.exists(ga_key) && requireNamespace("googleAnalyticsR", quietly = TRUE)) {
-        tryCatch({
-          googleAnalyticsR::ga_auth(json_file = ga_key)
-          if (!nzchar(prop_id)) {
-            accs <- tryCatch(googleAnalyticsR::ga_account_list("ga4"), error = function(e) NULL)
-            if (!is.null(accs) && nrow(accs) > 0 && "propertyId" %in% colnames(accs)) {
-              prop_id <- as.character(accs$propertyId[1])
-            }
-          }
-          if (nzchar(prop_id)) {
-            df <- googleAnalyticsR::ga_data(
-              propertyId = prop_id,
-              date_range = c("2024-01-01", "today"),
-              metrics = "screenPageViews"
-            )
-            if (!is.null(df) && nrow(df) > 0 && "screenPageViews" %in% colnames(df)) {
-              val <- sum(as.numeric(df$screenPageViews), na.rm = TRUE)
-              if (val > 0) {
-                .scSimEval_views_env$ga_views <- val
-              }
-            }
-          }
-        }, error = function(e) NULL)
-      }
-    }
-    
-    # 3. Monotonically increasing cumulative total (never resets on container recycling)
-    total_views <- max(
-      baseline_views + .scSimEval_views_env$session_count - 1,
-      cached_file_views + .scSimEval_views_env$session_count - 1,
-      .scSimEval_views_env$ga_views + .scSimEval_views_env$session_count - 1
-    )
-    
-    # Persist updated count to disk cache
-    try(saveRDS(total_views, cache_path), silent = TRUE)
-    
-    formatC(total_views, format = "d", big.mark = ",")
-  })
+  observeEvent(input$btn_empty_help, { nav_select("nav_active", "Help & Getting Started") })
   
   # ----------------------------------------------------------------------------
   # Data Hub: Mode 1 - Load Demo Benchmark
@@ -2618,25 +2484,46 @@ server <- function(input, output, session) {
       showNotification("Demo benchmark file not found on disk.", type = "warning")
     }
   })
+
+  observeEvent(input$btn_empty_load_demo, {
+    if (!is.null(initial_demo)) {
+      rv$benchmark_df <- initial_demo$benchmark_summary_table
+      rv$methods <- initial_demo$methods
+      rv$toy_ref <- initial_demo$toy_data$ref
+      rv$toy_sim <- initial_demo$toy_data$sim
+      rv$sim_matrices <- init_demo_sim_matrices(initial_demo)
+      rv$cell_types <- initial_demo$toy_data$cell_types
+      rv$batch <- initial_demo$toy_data$batch
+      rv$source_name <- "Demo Benchmark (Splatter, scDesign3, SCRIP, SymSim, dyngen, simATAC)"
+      rv$dataset_summary_df <- init_demo_summary(initial_demo)
+      
+      updateCheckboxGroupInput(session, "sel_bubble_methods", choices = rv$methods, selected = rv$methods)
+      showNotification("Demo benchmark loaded successfully!", type = "message")
+    } else {
+      showNotification("Demo benchmark file not found on disk.", type = "warning")
+    }
+  })
   
   # ----------------------------------------------------------------------------
   # Data Hub: Mode 2 Dynamic Inputs (Single-Cell: scRNA-seq / scATAC-seq)
   # ----------------------------------------------------------------------------
   output$ui_uni_sim_inputs <- renderUI({
-    n_sims <- if (!is.null(input$num_uni_sims)) as.integer(input$num_uni_sims) else 1
-    if (is.na(n_sims) || n_sims < 1) n_sims <- 1
-    if (n_sims > 6) n_sims <- 6
+    if (is.null(input$file_uni_sims) || nrow(input$file_uni_sims) == 0) {
+      return(p("Upload one or more simulated count matrices above to configure simulator names and scalability metrics.", style = "font-size: 0.85rem; color: #6c757d; font-style: italic;"))
+    }
+    n_files <- nrow(input$file_uni_sims)
     
-    inputs_list <- lapply(seq_len(n_sims), function(i) {
-      default_name <- paste("Simulator", i)
+    inputs_list <- lapply(seq_len(n_files), function(i) {
+      fname <- input$file_uni_sims$name[i]
+      default_name <- tools::file_path_sans_ext(fname)
+      
       div(
         class = "sim-input-card",
         tags$b(paste0("Simulator ", i, ": "), style = "font-size: 0.9rem; color: #1B4F72;"),
-        textInput(paste0("uni_sim_name_", i), "Simulator Name:", value = default_name),
-        fileInput(paste0("file_uni_sim_", i), "Simulated Count Matrix (.rds / .csv / .tsv / .txt):", accept = c(".rds", ".csv", ".tsv", ".txt")),
+        textInput(paste0("uni_name_", i), "Simulator Name:", value = default_name),
         fluidRow(
-          column(6, numericInput(paste0("uni_sim_time_", i), "Elapsed Time (s):", value = round(25 + i * 10, 1), min = 0.1, step = 0.5)),
-          column(6, numericInput(paste0("uni_sim_mem_", i), "Peak RAM (MB):", value = round(650 + i * 150, 0), min = 1, step = 10))
+          column(6, numericInput(paste0("uni_time_", i), "Elapsed Time (s):", value = round(25 + i * 10, 1), min = 0.1, step = 0.5)),
+          column(6, numericInput(paste0("uni_mem_", i), "Peak RAM (MB):", value = round(650 + i * 150, 0), min = 1, step = 10))
         )
       )
     })
@@ -2647,9 +2534,9 @@ server <- function(input, output, session) {
   # Data Hub: Mode 2 Evaluation Trigger (Single-Cell: 1 or Multiple Simulators)
   # ----------------------------------------------------------------------------
   observeEvent(input$btn_run_uni_eval, {
-    req(input$file_uni_ref)
-    n_sims <- if (!is.null(input$num_uni_sims)) as.integer(input$num_uni_sims) else 1
-    if (is.na(n_sims) || n_sims < 1) n_sims <- 1
+    req(input$file_uni_ref, input$file_uni_sims)
+    n_files <- nrow(input$file_uni_sims)
+    req(n_files > 0)
     
     withProgress(message = "Single-Cell Evaluation", value = 0, {
       tryCatch({
@@ -2669,27 +2556,21 @@ server <- function(input, output, session) {
           modality = "Single-Cell (Counts)", cell_types = cell_types_vec, batch_info = batch_vec
         )
         
-        for (i in seq_len(n_sims)) {
-          sim_file <- input[[paste0("file_uni_sim_", i)]]
-          if (is.null(sim_file)) {
-            stop(sprintf("Please upload the simulated count matrix for Simulator %d.", i))
-          }
-          
-          sim_name <- input[[paste0("uni_sim_name_", i)]]
+        for (i in seq_len(n_files)) {
+          sim_name <- input[[paste0("uni_name_", i)]]
           if (is.null(sim_name) || trimws(sim_name) == "") {
-            sim_name <- tools::file_path_sans_ext(sim_file$name)
-            if (is.null(sim_name) || trimws(sim_name) == "") sim_name <- paste("Simulator", i)
+            sim_name <- tools::file_path_sans_ext(input$file_uni_sims$name[i])
           }
           
-          sim_time <- as.numeric(input[[paste0("uni_sim_time_", i)]])
+          sim_time <- as.numeric(input[[paste0("uni_time_", i)]])
           if (is.null(sim_time) || is.na(sim_time)) sim_time <- 30.0
           
-          sim_mem <- as.numeric(input[[paste0("uni_sim_mem_", i)]])
+          sim_mem <- as.numeric(input[[paste0("uni_mem_", i)]])
           if (is.null(sim_mem) || is.na(sim_mem)) sim_mem <- 800.0
           
-          incProgress(0.7 / n_sims, detail = sprintf("Evaluating [%d/%d]: %s", i, n_sims, sim_name))
+          incProgress(0.7 / n_files, detail = sprintf("Evaluating [%d/%d]: %s", i, n_files, sim_name))
           
-          sim_mat <- read_uploaded_matrix(sim_file$datapath, sim_file$name)
+          sim_mat <- read_uploaded_matrix(input$file_uni_sims$datapath[i], input$file_uni_sims$name[i])
           if (i == 1) first_sim_mat <- sim_mat
           all_sim_mats[[sim_name]] <- sim_mat
           
@@ -2743,7 +2624,7 @@ server <- function(input, output, session) {
         rv$source_name <- sprintf("Single-Cell Benchmark (%d Simulators)", length(rv$methods))
         
         updateCheckboxGroupInput(session, "sel_bubble_methods", choices = rv$methods, selected = rv$methods)
-        showNotification(sprintf("Single-cell evaluation complete! Evaluated %d simulator(s).", n_sims), type = "message")
+        showNotification(sprintf("Single-cell evaluation complete! Evaluated %d simulator(s).", n_files), type = "message")
       }, error = function(e) {
         showNotification(paste("Evaluation error:", e$message), type = "error")
       })
@@ -3019,6 +2900,7 @@ server <- function(input, output, session) {
       }
     }, error = function(e) NULL)
   })
+  
   output$ui_dataset_summary_download_btn <- renderUI({
     if (!is.null(rv$dataset_summary_df) && nrow(rv$dataset_summary_df) > 0) {
       downloadButton("download_dataset_summary_csv", "Export Properties (CSV)", class = "btn btn-sm btn-outline-secondary", icon = icon("file-csv"))
@@ -3119,7 +3001,7 @@ server <- function(input, output, session) {
             ),
             h4("Welcome to Data Hub", style = "font-weight: 700; color: #1E293B; margin-bottom: 8px; font-size: 1.15rem;"),
             p(
-              "Load our example benchmark to explore all features with 6 pre-evaluated simulators, or upload your own real and simulated count matrices using the controls on the left.",
+              "Load our example benchmark to explore all features with 6 pre-evaluated simulators, or upload your own real and simulated datasets (scRNA-seq, scATAC-seq, or single-cell multiomics) using the controls on the left.",
               style = "font-size: 0.90rem; color: #64748B; line-height: 1.6; margin-bottom: 22px;"
             ),
             div(
