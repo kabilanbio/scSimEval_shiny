@@ -950,115 +950,112 @@ ui <- page_navbar(
   ),
   
   # ============================================================================
-  # TAB 2: DATA HUB (UPLOAD & EVALUATE)
+  # ============================================================================
+  # TAB 2: DATA HUB (INGESTION & BENCHMARK REGISTRY)
   # ============================================================================
   nav_panel(
     "Data Hub",
     layout_sidebar(
       sidebar = sidebar(
-        width = 420,
-        title = "Data Upload & Evaluation",
+        width = 340,
+        title = div(icon("database", class = "me-2"), "Ingestion Controls"),
         
         radioButtons(
-          "opt_data_mode", "Choose Evaluation Mode:",
+          "opt_data_mode", tags$b("Ingestion Modality:"),
           choices = c(
-            "Option 1: Explore Demo Benchmark (6 Simulators)" = "demo",
-            "Option 2: Single-Cell Evaluation (scRNA-seq / scATAC-seq)" = "unimodal",
-            "Option 3: Multiomics Evaluation (scRNA-seq + scATAC-seq)" = "multiomics",
-            "Option 4: Upload Saved Results (.rds / .csv)" = "upload_bench"
+            "Reference Benchmark (6 Simulators)" = "demo",
+            "Unimodal Profiling (scRNA / scATAC)" = "unimodal",
+            "Multiomics Co-Assay (scRNA + scATAC)" = "multiomics",
+            "Precomputed Benchmark (.rds / .csv)" = "upload_bench"
           ),
           selected = "demo"
         ),
-        hr(),
+        hr(style = "margin: 10px 0;"),
         
-        # Mode 1: Demo
+        # Mode 1: Reference Demo
         conditionalPanel(
           condition = "input.opt_data_mode == 'demo'",
-          p("Instantly explore pre-calculated benchmark results for 6 simulation methods (Splatter, scDesign3, SCRIP, SymSim, dyngen, simATAC) across all 62 measures.", style = "font-size: 0.88rem; color: #555;"),
-          actionButton("btn_load_demo", "Load Demo Benchmark (6 Simulators)", class = "btn btn-success w-100", icon = icon("play"))
+          p("Load precomputed evaluations across 6 representative simulation architectures (Splatter, scDesign3, SCRIP, SymSim, dyngen, simATAC) and 62 canonical fidelity measures.",
+            style = "font-size: 0.82rem; color: #475569; line-height: 1.45;"),
+          actionButton("btn_load_demo", "Load Reference Benchmark (6 Simulators)", class = "btn btn-primary w-100", icon = icon("play"))
         ),
         
-        # Mode 2: Single-Cell Evaluation (scRNA-seq or scATAC-seq) - 1 or multiple simulators
+        # Mode 2: Unimodal Profiling (scRNA-seq or scATAC-seq)
         conditionalPanel(
           condition = "input.opt_data_mode == 'unimodal'",
           div(
-            class = "alert alert-warning py-2 px-3",
-            style = "font-size: 0.81rem; margin-bottom: 12px; border-left: 3px solid #F59E0B; background-color: #FFFBEB; color: #92400E;",
-            icon("info-circle"), tags$b(" Cloud Capacity Notice (4GB RAM / 1 CPU): "),
-            "Best for up to ~3,000–4,000 cells & 2,000–3,000 genes. For large datasets, run locally via ",
+            style = "font-size: 0.78rem; color: #475569; background: #F8FAFC; border-left: 3px solid #0284C7; border-radius: 4px; padding: 7px 10px; margin-bottom: 12px;",
+            icon("circle-info", class = "text-info me-1"), tags$b("Cloud Capacity (4 GB / 1 vCPU): "),
+            "Best up to ~4,000 cells & 3,000 features. For larger atlases, execute locally via ",
             tags$code("scSimEval::launch_scSimEval_app()"), "."
           ),
-          h6(tags$b("1. Reference Biological Dataset (Real Cells)")),
-          fileInput("file_uni_ref", "Reference Count Matrix (.rds / .csv / .tsv / .txt):", accept = c(".rds", ".csv", ".tsv", ".txt")),
+          tags$div(style = "font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #475569; margin-top: 10px; margin-bottom: 4px;", "1. Empirical Reference Matrix"),
+          fileInput("file_uni_ref", NULL, placeholder = "Reference count matrix (.rds / .csv / .tsv / .txt)", accept = c(".rds", ".csv", ".tsv", ".txt")),
           uiOutput("ui_uni_ref_badge"),
           
-          h6(tags$b("2. Simulated Single-Cell Datasets")),
-          numericInput("num_uni_sims", "Number of Single-Cell Simulators to Compare:", value = 1, min = 1, max = 6, step = 1),
-          p("Provide simulated count matrix along with simulator name and scalability metrics for each simulator:", style = "font-size: 0.85rem; color: #555;"),
+          tags$div(style = "font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #475569; margin-top: 10px; margin-bottom: 4px;", "2. Simulated Matrices (1 or Multiple)"),
+          fileInput("file_uni_sims", NULL, placeholder = "Simulated matrices...", multiple = TRUE, accept = c(".rds", ".csv", ".tsv", ".txt")),
+          
+          tags$div(style = "font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #475569; margin-top: 10px; margin-bottom: 4px;", "3. Simulator Metadata & Scalability"),
+          p("Define simulator identifier and computational benchmarks (runtime, peak memory):", style = "font-size: 0.78rem; color: #64748B; margin-bottom: 6px;"),
           uiOutput("ui_uni_sim_inputs"),
           
-          h6(tags$b("3. Optional Biological Annotations")),
-          fileInput("file_uni_celltypes", "Optional Cell Type Labels (.rds / .csv / .txt):", accept = c(".rds", ".csv", ".tsv", ".txt")),
-          fileInput("file_uni_batch", "Optional Batch Annotations (.rds / .csv / .txt):", accept = c(".rds", ".csv", ".tsv", ".txt")),
+          tags$div(style = "font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #475569; margin-top: 10px; margin-bottom: 4px;", "4. Biological Annotations (Optional)"),
+          fileInput("file_uni_celltypes", NULL, placeholder = "Cell type labels (.rds / .csv / .txt)", accept = c(".rds", ".csv", ".tsv", ".txt")),
+          fileInput("file_uni_batch", NULL, placeholder = "Batch annotations (.rds / .csv / .txt)", accept = c(".rds", ".csv", ".tsv", ".txt")),
           
-          checkboxInput("chk_append_uni", "Append to current benchmark (compare together)", value = FALSE),
-          actionButton("btn_run_uni_eval", "Evaluate Single-Cell Simulators", class = "btn btn-primary w-100", icon = icon("calculator"))
+          checkboxInput("chk_append_uni", "Append to current benchmark registry", value = FALSE),
+          actionButton("btn_run_uni_eval", "Compute Unimodal Fidelity", class = "btn btn-primary w-100", icon = icon("microchip"))
         ),
         
-        # Mode 3: Multiomics Evaluation (scRNA-seq + scATAC-seq) - 1 or multiple simulators
+        # Mode 3: Multiomics Profiling (scRNA-seq + scATAC-seq)
         conditionalPanel(
           condition = "input.opt_data_mode == 'multiomics'",
           div(
-            class = "alert alert-warning py-2 px-3",
-            style = "font-size: 0.81rem; margin-bottom: 12px; border-left: 3px solid #F59E0B; background-color: #FFFBEB; color: #92400E;",
-            div(style = "font-weight: 700; margin-bottom: 3px;", icon("exclamation-triangle"), " Multiomics Sizing & Memory Notice (Cloud 4GB RAM / 1 CPU):"),
-            p("• ", tags$b("Quad-Matrix Load: "), "Evaluates 4 matrices concurrently (Real RNA + ATAC, Simulated RNA + ATAC).", style = "margin-bottom: 2px;"),
-            p("• ", tags$b("Recommended Limits: "), "Up to ~2,000–3,000 cells, 2,000–3,000 genes, and 5,000–8,000 peaks.", style = "margin-bottom: 2px;"),
-            p("• ", tags$b("Peak Filtering Tip: "), "Pre-filter rare peaks (detected in <1-2% cells) before upload to avoid memory limits.", style = "margin-bottom: 2px;"),
-            p("• ", tags$b("Full Genome Peaksets (50k+ peaks): "), "Run locally via ", tags$code("scSimEval::launch_scSimEval_app()"), " to utilize full workstation RAM.", style = "margin-bottom: 0;")
+            style = "font-size: 0.78rem; color: #475569; background: #F8FAFC; border-left: 3px solid #6366F1; border-radius: 4px; padding: 7px 10px; margin-bottom: 12px;",
+            div(style = "font-weight: 700; color: #312E81; margin-bottom: 2px;", icon("microchip", class = "me-1"), "Multiomics Quad-Matrix Load:"),
+            div("Evaluates 4 matrices concurrently (Real RNA+ATAC, Sim RNA+ATAC). Recommended <= 3,000 cells, 3,000 genes, and 8,000 pre-filtered peaks.")
           ),
           radioButtons(
-            "opt_multi_pairing", "Multiomics Dataset Type:",
+            "opt_multi_pairing", "Assay Modality Pairing:",
             choices = c(
-              "Paired Co-assay (Same Cells, e.g., 10x Multiome, SHARE-seq)" = "paired",
-              "Unpaired Profiling (Separate Cells from Same Tissue)" = "unpaired"
+              "Paired Co-Assay (Same Barcodes, 10x / SHARE-seq)" = "paired",
+              "Unpaired Profiling (Independent Cells)" = "unpaired"
             ),
             selected = "paired"
           ),
           uiOutput("ui_pairing_info_banner"),
-          h6(tags$b("1. Reference Multiomics Dataset (Real Cells)")),
-          fileInput("file_multi_ref_rna", "Reference RNA Count Matrix (.rds / .csv / .tsv / .txt):", accept = c(".rds", ".csv", ".tsv", ".txt")),
+          tags$div(style = "font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #475569; margin-top: 10px; margin-bottom: 4px;", "1. Empirical Reference Multiomics"),
+          fileInput("file_multi_ref_rna", NULL, placeholder = "Reference RNA matrix...", accept = c(".rds", ".csv", ".tsv", ".txt")),
           uiOutput("ui_multi_ref_rna_badge"),
-          fileInput("file_multi_ref_atac", "Reference ATAC Count Matrix (.rds / .csv / .tsv / .txt):", accept = c(".rds", ".csv", ".tsv", ".txt")),
+          fileInput("file_multi_ref_atac", NULL, placeholder = "Reference ATAC matrix...", accept = c(".rds", ".csv", ".tsv", ".txt")),
           uiOutput("ui_multi_ref_atac_badge"),
           
-          h6(tags$b("2. Simulated Multiomics Datasets")),
-          numericInput("num_multi_sims", "Number of Multiomics Simulators to Compare:", value = 1, min = 1, max = 5, step = 1),
-          p("Provide simulated RNA and ATAC matrices along with scalability metrics for each simulator:", style = "font-size: 0.85rem; color: #555;"),
+          tags$div(style = "font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #475569; margin-top: 10px; margin-bottom: 4px;", "2. Simulated Multiomics Suites"),
+          numericInput("num_multi_sims", "Simulators to Evaluate:", value = 1, min = 1, max = 5, step = 1),
+          p("Upload paired/unpaired simulated matrices and computational metrics:", style = "font-size: 0.78rem; color: #64748B; margin-bottom: 6px;"),
           uiOutput("ui_multiomics_sim_inputs"),
           
-          h6(tags$b("3. Optional Biological Annotations")),
-          fileInput("file_multi_celltypes", "Optional Cell Type Labels (.rds / .csv / .txt):", accept = c(".rds", ".csv", ".tsv", ".txt")),
-          fileInput("file_multi_batch", "Optional Batch Annotations (.rds / .csv / .txt):", accept = c(".rds", ".csv", ".tsv", ".txt")),
+          tags$div(style = "font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #475569; margin-top: 10px; margin-bottom: 4px;", "3. Biological Annotations (Optional)"),
+          fileInput("file_multi_celltypes", NULL, placeholder = "Cell types (.rds / .csv / .txt)", accept = c(".rds", ".csv", ".tsv", ".txt")),
+          fileInput("file_multi_batch", NULL, placeholder = "Batches (.rds / .csv / .txt)", accept = c(".rds", ".csv", ".tsv", ".txt")),
           
-          checkboxInput("chk_append_multi", "Append to current benchmark (compare together)", value = FALSE),
-          actionButton("btn_run_multi_eval", "Evaluate Multiomics Simulators", class = "btn btn-primary w-100", icon = icon("dna"))
+          checkboxInput("chk_append_multi", "Append to current benchmark registry", value = FALSE),
+          actionButton("btn_run_multi_eval", "Compute Multiomics Fidelity", class = "btn btn-primary w-100", icon = icon("dna"))
         ),
         
-        # Mode 4: Saved Benchmark Upload
+        # Mode 4: Precomputed Benchmark
         conditionalPanel(
           condition = "input.opt_data_mode == 'upload_bench'",
-          p("Upload previously saved evaluation results (.rds or .csv) from scSimEval.", style = "font-size: 0.88rem; color: #555;"),
-          fileInput("file_bench_upload", "Select Saved File (.rds or .csv):", accept = c(".rds", ".csv")),
-          actionButton("btn_load_uploaded_bench", "Load Saved File", class = "btn btn-info text-white w-100", icon = icon("folder-open"))
+          p("Restore a pre-calculated benchmark registry (.rds or .csv) previously computed by scSimEval.", style = "font-size: 0.82rem; color: #475569;"),
+          fileInput("file_bench_upload", "Select Benchmark Archive (.rds / .csv):", accept = c(".rds", ".csv")),
+          actionButton("btn_load_uploaded_bench", "Ingest Benchmark Archive", class = "btn btn-secondary w-100", icon = icon("folder-open"))
         )
       ),
       
       uiOutput("ui_datahub_main_panel")
     )
   ),
-  
-  # ============================================================================
   # TAB 3: COMPARATIVE BUBBLE MATRIX (FLAGSHIP FIGURE)
   # ============================================================================
   nav_panel(
@@ -2937,13 +2934,13 @@ server <- function(input, output, session) {
   
   output$ui_dataset_summary_download_btn <- renderUI({
     if (!is.null(rv$dataset_summary_df) && nrow(rv$dataset_summary_df) > 0) {
-      downloadButton("download_dataset_summary_csv", "Export Properties (CSV)", class = "btn btn-sm btn-outline-primary", icon = icon("file-csv"))
+      downloadButton("download_dataset_summary_csv", "Export Properties (CSV)", class = "btn btn-sm btn-outline-secondary", icon = icon("file-csv"))
     }
   })
   
   output$ui_dataset_summary_kpis <- renderUI({
     if (is.null(rv$dataset_summary_df) || nrow(rv$dataset_summary_df) == 0) {
-      return(p("Dataset properties will appear here once datasets are loaded or evaluated.", style = "font-size: 0.88rem; color: #94A3B8; font-style: italic;"))
+      return(p("Dataset properties will appear here once matrices are ingested.", style = "font-size: 0.85rem; color: #94A3B8; font-style: italic;"))
     }
     df <- rv$dataset_summary_df
     ref_idx <- which(df$Role == "Biological Reference" | df$Role == "Reference")
@@ -2956,21 +2953,21 @@ server <- function(input, output, session) {
     }
     
     fluidRow(
-      column(2, div(class = "stat-card", style = "border-left: 4px solid #1E3A8A; padding: 12px 14px; margin-bottom: 0;",
-                    div(class = "stat-number", style = "color: #1E3A8A; font-size: 1.55rem;", row_pick[["Cells (N)"]]),
-                    div(class = "stat-label", "Cells (N)"))),
-      column(3, div(class = "stat-card", style = "border-left: 4px solid #0D9488; padding: 12px 14px; margin-bottom: 0;",
-                    div(class = "stat-number", style = "color: #0D9488; font-size: 1.55rem;", feats_str),
-                    div(class = "stat-label", "Features (P)"))),
-      column(2, div(class = "stat-card", style = "border-left: 4px solid #D97706; padding: 12px 14px; margin-bottom: 0;",
-                    div(class = "stat-number", style = "color: #D97706; font-size: 1.55rem;", row_pick[["Sparsity"]]),
-                    div(class = "stat-label", "Sparsity (% zeros)"))),
-      column(3, div(class = "stat-card", style = "border-left: 4px solid #7C3AED; padding: 12px 14px; margin-bottom: 0;",
-                    div(class = "stat-number", style = "color: #7C3AED; font-size: 1.55rem;", row_pick[["Cell Types (Groups)"]]),
-                    div(class = "stat-label", "Biological Groups"))),
-      column(2, div(class = "stat-card", style = "border-left: 4px solid #2563EB; padding: 12px 14px; margin-bottom: 0;",
-                    div(class = "stat-number", style = "color: #2563EB; font-size: 1.55rem;", row_pick[["Batches"]]),
-                    div(class = "stat-label", "Technical Batches")))
+      column(2, div(class = "stat-card", style = "border: 1px solid #E2E8F0; border-left: 3px solid #1E3A8A; padding: 10px 12px; margin-bottom: 0; background: #FFFFFF; border-radius: 6px;",
+                    div(class = "stat-number", style = "color: #0F172A; font-size: 1.35rem; font-family: monospace; font-weight: 700;", row_pick[["Cells (N)"]]),
+                    div(class = "stat-label", style = "font-size: 0.72rem; letter-spacing: 0.05em; color: #64748B;", "Cells (N)"))),
+      column(3, div(class = "stat-card", style = "border: 1px solid #E2E8F0; border-left: 3px solid #0D9488; padding: 10px 12px; margin-bottom: 0; background: #FFFFFF; border-radius: 6px;",
+                    div(class = "stat-number", style = "color: #0F172A; font-size: 1.35rem; font-family: monospace; font-weight: 700;", feats_str),
+                    div(class = "stat-label", style = "font-size: 0.72rem; letter-spacing: 0.05em; color: #64748B;", "Features (P)"))),
+      column(2, div(class = "stat-card", style = "border: 1px solid #E2E8F0; border-left: 3px solid #D97706; padding: 10px 12px; margin-bottom: 0; background: #FFFFFF; border-radius: 6px;",
+                    div(class = "stat-number", style = "color: #0F172A; font-size: 1.35rem; font-family: monospace; font-weight: 700;", row_pick[["Sparsity"]]),
+                    div(class = "stat-label", style = "font-size: 0.72rem; letter-spacing: 0.05em; color: #64748B;", "Sparsity (S%)"))),
+      column(3, div(class = "stat-card", style = "border: 1px solid #E2E8F0; border-left: 3px solid #6366F1; padding: 10px 12px; margin-bottom: 0; background: #FFFFFF; border-radius: 6px;",
+                    div(class = "stat-number", style = "color: #0F172A; font-size: 1.35rem; font-family: monospace; font-weight: 700;", row_pick[["Cell Types (Groups)"]]),
+                    div(class = "stat-label", style = "font-size: 0.72rem; letter-spacing: 0.05em; color: #64748B;", "Biological Groups (K)"))),
+      column(2, div(class = "stat-card", style = "border: 1px solid #E2E8F0; border-left: 3px solid #0284C7; padding: 10px 12px; margin-bottom: 0; background: #FFFFFF; border-radius: 6px;",
+                    div(class = "stat-number", style = "color: #0F172A; font-size: 1.35rem; font-family: monospace; font-weight: 700;", row_pick[["Batches"]]),
+                    div(class = "stat-label", style = "font-size: 0.72rem; letter-spacing: 0.05em; color: #64748B;", "Batches (B)")))
     )
   })
   
@@ -2985,8 +2982,16 @@ server <- function(input, output, session) {
         autoWidth = TRUE
       ),
       rownames = FALSE,
-      class = "compact stripe hover"
-    )
+      class = "compact stripe hover border"
+    ) %>%
+      formatStyle(
+        columns = c("Role", "Dataset"),
+        fontWeight = "bold"
+      ) %>%
+      formatStyle(
+        columns = c("Cells (N)", "Features (P)", "Sparsity", "Cell Types (Groups)", "Batches"),
+        fontFamily = "monospace"
+      )
   })
   
   output$download_dataset_summary_csv <- downloadHandler(
@@ -2998,7 +3003,6 @@ server <- function(input, output, session) {
   )
   
   # ----------------------------------------------------------------------------
-  # ----------------------------------------------------------------------------
   # Data Hub: Main Panel UI & Dynamic Explorer
   # ----------------------------------------------------------------------------
   observeEvent(input$btn_jump_to_bubble, {
@@ -3007,119 +3011,139 @@ server <- function(input, output, session) {
 
   output$ui_datahub_main_panel <- renderUI({
     if (is.null(rv$benchmark_df) && is.null(rv$toy_ref)) {
-      # Minimalist Empty State Card
+      # Scientific Minimalist Empty State Workbench
       card(
         card_header(
           div(
             class = "d-flex justify-content-between align-items-center",
-            span(icon("database"), " Data Hub • Benchmark & Dataset Overview"),
-            span(class = "badge bg-secondary", "Awaiting Data Selection")
+            span(icon("dna", class = "me-2 text-primary"), tags$strong("Genomic In Silico Evaluation & Ingestion Hub")),
+            span(class = "badge bg-light text-secondary border", "Standby • Select Evaluation Modality")
           )
         ),
         card_body(
+          style = "padding: 20px 22px;",
           div(
-            style = "text-align: center; padding: 35px 20px 25px 20px;",
-            div(
-              style = "width: 72px; height: 72px; margin: 0 auto 16px auto; border-radius: 50%; background: #EFF6FF; display: flex; align-items: center; justify-content: center;",
-              icon("cloud-arrow-up", class = "fa-2x", style = "color: #2563EB;")
-            ),
-            h4("Welcome to scSimEval Data Hub", style = "font-weight: 700; color: #1E293B; margin-bottom: 8px;"),
-            p("Choose an evaluation or data exploration mode from the left sidebar to get started.",
-              style = "color: #64748B; font-size: 0.95rem; max-width: 650px; margin: 0 auto 28px auto;")
+            style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 18px 22px; margin-bottom: 22px;",
+            h5("Unified Single-Cell & Multiomics Simulation Benchmark", style = "font-weight: 700; color: #0F172A; margin-bottom: 6px; font-size: 1.05rem;"),
+            p(
+              "scSimEval systematically assesses the fidelity of single-cell and single-cell multiomics simulators across 62 empirical metrics spanning distributional properties, gene correlations, zero-inflation, cellular clusters, batch confounders, trajectory dynamics, and cross-modal coupling. Select an ingestion modality from the left controls to begin.",
+              style = "font-size: 0.86rem; color: #475569; margin: 0; line-height: 1.55;"
+            )
           ),
           fluidRow(
             column(
               3,
               div(
-                class = "stat-card",
-                style = "border-left: 4px solid #10B981; padding: 14px 16px; min-height: 140px; background: #F8FAFC;",
-                div(tags$b("Option 1: Demo Benchmark"), style = "color: #065F46; font-size: 0.92rem; margin-bottom: 6px;"),
-                p("Pre-computed evaluation across 6 simulators (Splatter, scDesign3, SCRIP, SymSim, dyngen, simATAC) and 62 metrics.", style = "font-size: 0.82rem; color: #475569; margin: 0;")
+                style = "background: #FFFFFF; border: 1px solid #E2E8F0; border-top: 3px solid #1E3A8A; border-radius: 6px; padding: 14px 16px; min-height: 150px;",
+                div(
+                  class = "d-flex justify-content-between align-items-center mb-1",
+                  tags$b("Demo Benchmark", style = "color: #1E3A8A; font-size: 0.90rem;"),
+                  span(class = "badge bg-light text-primary border", style = "font-size: 0.70rem;", "6 Simulators")
+                ),
+                p("Pre-calculated benchmark evaluating Splatter, scDesign3, SCRIP, SymSim, dyngen, and simATAC across 62 canonical fidelity measures.",
+                  style = "font-size: 0.80rem; color: #64748B; margin: 0; line-height: 1.45;")
               )
             ),
             column(
               3,
               div(
-                class = "stat-card",
-                style = "border-left: 4px solid #3B82F6; padding: 14px 16px; min-height: 140px; background: #F8FAFC;",
-                div(tags$b("Option 2: Single-Cell"), style = "color: #1E40AF; font-size: 0.92rem; margin-bottom: 6px;"),
-                p("Upload reference and simulated count matrices (scRNA-seq or scATAC-seq) for multi-simulator evaluation.", style = "font-size: 0.82rem; color: #475569; margin: 0;")
+                style = "background: #FFFFFF; border: 1px solid #E2E8F0; border-top: 3px solid #0D9488; border-radius: 6px; padding: 14px 16px; min-height: 150px;",
+                div(
+                  class = "d-flex justify-content-between align-items-center mb-1",
+                  tags$b("Unimodal Profiling", style = "color: #0D9488; font-size: 0.90rem;"),
+                  span(class = "badge bg-light text-teal border", style = "font-size: 0.70rem; color: #0D9488;", "scRNA / scATAC")
+                ),
+                p("Ingest empirical reference count matrices and in silico simulated datasets for automated pairwise and multi-simulator fidelity scoring.",
+                  style = "font-size: 0.80rem; color: #64748B; margin: 0; line-height: 1.45;")
               )
             ),
             column(
               3,
               div(
-                class = "stat-card",
-                style = "border-left: 4px solid #8B5CF6; padding: 14px 16px; min-height: 140px; background: #F8FAFC;",
-                div(tags$b("Option 3: Multiomics"), style = "color: #5B21B6; font-size: 0.92rem; margin-bottom: 6px;"),
-                p("Quad-matrix evaluation for paired co-assays (10x Multiome, SHARE-seq) or unpaired scRNA + scATAC profiling.", style = "font-size: 0.82rem; color: #475569; margin: 0;")
+                style = "background: #FFFFFF; border: 1px solid #E2E8F0; border-top: 3px solid #6366F1; border-radius: 6px; padding: 14px 16px; min-height: 150px;",
+                div(
+                  class = "d-flex justify-content-between align-items-center mb-1",
+                  tags$b("Multiomics Co-Assay", style = "color: #4338CA; font-size: 0.90rem;"),
+                  span(class = "badge bg-light text-indigo border", style = "font-size: 0.70rem; color: #4338CA;", "Quad-Matrix")
+                ),
+                p("Quad-matrix framework evaluating joint chromatin-transcriptome coupling across paired (10x Multiome, SHARE-seq) or unpaired modalities.",
+                  style = "font-size: 0.80rem; color: #64748B; margin: 0; line-height: 1.45;")
               )
             ),
             column(
               3,
               div(
-                class = "stat-card",
-                style = "border-left: 4px solid #F59E0B; padding: 14px 16px; min-height: 140px; background: #F8FAFC;",
-                div(tags$b("Option 4: Saved Results"), style = "color: #92400E; font-size: 0.92rem; margin-bottom: 6px;"),
-                p("Upload previously saved .rds or .csv benchmark files to immediately restore figures and summaries.", style = "font-size: 0.82rem; color: #475569; margin: 0;")
+                style = "background: #FFFFFF; border: 1px solid #E2E8F0; border-top: 3px solid #475569; border-radius: 6px; padding: 14px 16px; min-height: 150px;",
+                div(
+                  class = "d-flex justify-content-between align-items-center mb-1",
+                  tags$b("Precomputed Archive", style = "color: #334155; font-size: 0.90rem;"),
+                  span(class = "badge bg-light text-secondary border", style = "font-size: 0.70rem;", ".rds / .csv")
+                ),
+                p("Restore serialized evaluation outputs from scSimEval to immediately populate the Comparative Bubble Matrix and downstream diagnostic modules.",
+                  style = "font-size: 0.80rem; color: #64748B; margin: 0; line-height: 1.45;")
               )
             )
           ),
           div(
-            style = "margin-top: 24px; padding: 12px 16px; background: #F1F5F9; border-radius: 8px; font-size: 0.82rem; color: #475569;",
-            icon("circle-info", class = "text-primary"),
-            tags$b(" Universal Capability: "),
-            "Universal organism scope (human, mouse, rice, soybean, Arabidopsis, yeast). Supports up to 10 GB file uploads and sparse ", tags$code("dgCMatrix"), ", .rds, .csv, .tsv, and .txt formats."
+            style = "margin-top: 20px; padding: 10px 16px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 0.78rem; color: #475569; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;",
+            span(icon("microchip", class = "text-secondary me-1"), tags$b("Ingestion Schema: "), "Sparse ", tags$code("dgCMatrix"), ", .rds, .csv, .tsv, .txt"),
+            span(icon("dna", class = "text-primary me-1"), tags$b("Taxonomic Range: "), "Human, Mouse, Rice, Soybean, Arabidopsis, Yeast"),
+            span(icon("scale-balanced", class = "text-info me-1"), tags$b("Normalization: "), "Direction-aware fidelity score bounds [0, 1]")
           )
         )
       )
     } else {
-      # Active Loaded State: Clean Tabset Layout
+      # Active Ingestion: Scientific Tabset Layout
       navset_card_tab(
         title = div(
           class = "d-flex align-items-center justify-content-between w-100",
-          span(icon("database"), " Active Data & Benchmark Hub"),
-          span(class = "badge bg-success", style = "font-size: 0.8rem; font-weight: 500;", "Data Loaded")
+          span(icon("database", class = "me-2 text-primary"), tags$strong("Ingested Datasets & Benchmark Registry")),
+          span(class = "badge bg-success-subtle text-success border border-success-subtle", style = "font-size: 0.78rem; font-weight: 600;", "Active Ingestion")
         ),
-        selected = "Dataset Overview & Properties",
+        selected = "Dataset Architecture & Properties",
         
-        # Subtab 1: Dataset Overview & Properties
+        # Subtab 1: Dataset Architecture & Properties
         nav_panel(
-          title = span(icon("table-list"), " Dataset Overview & Properties"),
+          title = span(icon("table-cells", class = "me-1"), "Dataset Architecture & Properties"),
           div(
             style = "padding: 8px 4px;",
             uiOutput("ui_status_banner"),
             div(
               class = "dataset-summary-box mb-3",
-              h5(icon("list-check"), " Extracted Dataset Properties Summary", style = "font-weight: 700; color: #1B4F72; margin-top: 8px;"),
-              p("Biological and technical parameters extracted across uploaded count matrices:", style = "font-size: 0.86rem; color: #64748B; margin-bottom: 12px;"),
+              div(
+                class = "d-flex justify-content-between align-items-center mt-2 mb-2",
+                div(
+                  h6(tags$b("Matrix Architecture & Biological Parameters"), style = "color: #0F172A; margin: 0; font-size: 0.95rem;"),
+                  p("Structural dimensions, sparsity, and experimental annotations extracted from count matrices:",
+                    style = "font-size: 0.82rem; color: #64748B; margin: 0;")
+                ),
+                uiOutput("ui_dataset_summary_download_btn")
+              ),
               uiOutput("ui_dataset_summary_kpis"),
-              div(style = "margin-top: 14px; border: 1px solid #E2E8F0; border-radius: 8px; padding: 6px; background: #FFFFFF;",
-                  DTOutput("table_dataset_summary")),
-              div(class = "d-flex justify-content-end mt-2 pt-1",
-                  uiOutput("ui_dataset_summary_download_btn"))
+              div(style = "margin-top: 14px; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px; background: #FFFFFF;",
+                  DTOutput("table_dataset_summary"))
             ),
             uiOutput("ui_datahub_annotations_breakdown")
           )
         ),
         
-        # Subtab 2: Count Matrix & Metadata Explorer
+        # Subtab 2: Count Matrix & Metadata Inspector
         nav_panel(
-          title = span(icon("magnifying-glass-chart"), " Count Matrix & Metadata Explorer"),
+          title = span(icon("magnifying-glass", class = "me-1"), "Count Matrix & Metadata Inspector"),
           div(
             style = "padding: 8px 4px;",
             div(
-              style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px; margin-bottom: 16px;",
+              style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px;",
               fluidRow(
                 column(4, uiOutput("ui_inspect_dataset_selector")),
                 column(
                   5,
                   radioButtons(
-                    "opt_inspect_view_mode", "Inspection View:",
+                    "opt_inspect_view_mode", "Inspection Modality:",
                     choices = c(
-                      "Count Matrix (Head)" = "matrix_head",
-                      "Feature Statistics" = "feature_stats",
-                      "Cell Statistics & Metadata" = "cell_stats"
+                      "Raw Counts (Head)" = "matrix_head",
+                      "Feature Dispersion" = "feature_stats",
+                      "Cell Metrics & Metadata" = "cell_stats"
                     ),
                     selected = "matrix_head",
                     inline = TRUE
@@ -3129,14 +3153,14 @@ server <- function(input, output, session) {
                   3,
                   div(
                     style = "margin-top: 24px; text-align: right;",
-                    downloadButton("download_inspect_data_csv", "Export View (CSV)", class = "btn btn-sm btn-outline-secondary", icon = icon("file-csv"))
+                    downloadButton("download_inspect_data_csv", "Export Table (CSV)", class = "btn btn-sm btn-outline-secondary", icon = icon("file-csv"))
                   )
                 )
               )
             ),
             uiOutput("ui_inspect_matrix_kpis"),
             div(
-              style = "margin-top: 14px; border: 1px solid #E2E8F0; border-radius: 8px; padding: 6px; background: #FFFFFF;",
+              style = "margin-top: 14px; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px; background: #FFFFFF;",
               DTOutput("table_inspect_matrix_view")
             )
           )
@@ -3144,20 +3168,20 @@ server <- function(input, output, session) {
         
         # Subtab 3: Benchmark Scores Preview
         nav_panel(
-          title = span(icon("chart-simple"), " Benchmark Scores Preview"),
+          title = span(icon("chart-simple", class = "me-1"), "Benchmark Scores Preview"),
           div(
             style = "padding: 8px 4px;",
             div(
               class = "d-flex justify-content-between align-items-center mb-3",
               div(
-                h6(tags$b("Evaluated Simulation Fidelity Records"), style = "color: #1E293B; margin-bottom: 2px;"),
-                p("Displaying evaluated metrics across simulation methods. Column 'Score' represents direction-aware normalized fidelity in [0, 1].",
-                  style = "font-size: 0.85rem; color: #64748B; margin: 0;")
+                h6(tags$b("Evaluated Simulation Fidelity Records"), style = "color: #0F172A; margin-bottom: 2px; font-size: 0.95rem;"),
+                p("Tabular view of direction-normalized fidelity scores in [0, 1] across evaluated simulation methods.",
+                  style = "font-size: 0.82rem; color: #64748B; margin: 0;")
               ),
-              actionButton("btn_jump_to_bubble", "Explore Comparative Bubble Matrix (Tab 3) →", class = "btn btn-outline-primary btn-sm", icon = icon("arrow-right"))
+              actionButton("btn_jump_to_bubble", "Proceed to Comparative Bubble Matrix (Tab 3) →", class = "btn btn-outline-primary btn-sm", icon = icon("arrow-right"))
             ),
             div(
-              style = "border: 1px solid #E2E8F0; border-radius: 8px; padding: 6px; background: #FFFFFF;",
+              style = "border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px; background: #FFFFFF;",
               DTOutput("table_active_data_preview")
             )
           )
@@ -3176,11 +3200,19 @@ server <- function(input, output, session) {
     methods_str <- if (!is.null(rv$methods)) paste(rv$methods, collapse = ", ") else "None"
     
     div(
-      class = "alert alert-success py-2 px-3 mb-3",
-      div(style = "font-weight: 700; font-size: 0.95rem;", icon("circle-check"), " Active Benchmark: ", rv$source_name),
-      div(style = "font-size: 0.84rem; color: #166534; margin-top: 3px;",
-          sprintf("Total Records: %s | Simulators (%d): %s | Metrics: %d",
-                  formatC(n_records, format = "d", big.mark = ","), n_methods, methods_str, n_metrics))
+      style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 4px solid #1E3A8A; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px;",
+      div(
+        class = "d-flex justify-content-between align-items-center flex-wrap gap-2",
+        div(
+          tags$span(style = "font-weight: 700; color: #0F172A; font-size: 0.92rem;", icon("circle-check", class = "text-success me-1"), "Active Benchmark: ", rv$source_name),
+          tags$span(style = "font-size: 0.82rem; color: #64748B; margin-left: 12px;",
+                    sprintf("Simulators (%d): %s", n_methods, methods_str))
+        ),
+        div(
+          span(class = "badge bg-white text-secondary border", style = "font-size: 0.78rem;", sprintf("%s Records", formatC(n_records, format = "d", big.mark = ","))),
+          span(class = "badge bg-white text-primary border ms-1", style = "font-size: 0.78rem;", sprintf("%d Evaluated Metrics", n_metrics))
+        )
+      )
     )
   })
 
@@ -3198,8 +3230,8 @@ server <- function(input, output, session) {
         column(
           if (has_bt) 6 else 12,
           div(
-            style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px;",
-            h6(tags$b(icon("layer-group"), " Cell Type Distribution"), style = "color: #1E3A8A; margin-bottom: 8px;"),
+            style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 12px;",
+            h6(tags$b(icon("layer-group", class = "me-1"), " Biological Group Distribution"), style = "color: #1E3A8A; margin-bottom: 8px; font-size: 0.88rem;"),
             renderTable(ct_tbl, striped = TRUE, hover = TRUE, bordered = TRUE, spacing = "s")
           )
         )
@@ -3211,8 +3243,8 @@ server <- function(input, output, session) {
         column(
           if (has_ct) 6 else 12,
           div(
-            style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px;",
-            h6(tags$b(icon("boxes-stacked"), " Batch Distribution"), style = "color: #0D9488; margin-bottom: 8px;"),
+            style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 12px;",
+            h6(tags$b(icon("boxes-stacked", class = "me-1"), " Technical Batch Distribution"), style = "color: #0D9488; margin-bottom: 8px; font-size: 0.88rem;"),
             renderTable(bt_tbl, striped = TRUE, hover = TRUE, bordered = TRUE, spacing = "s")
           )
         )
@@ -3321,25 +3353,25 @@ server <- function(input, output, session) {
     med_depth <- round(stats::median(Matrix::colSums(mat)))
     
     fluidRow(
-      column(3, div(class = "stat-card", style = "border-left: 4px solid #1E3A8A; padding: 10px 14px; margin-bottom: 0;",
-                    div(class = "stat-number", style = "color: #1E3A8A; font-size: 1.35rem;", formatC(n_cells, format = "d", big.mark = ",")),
-                    div(class = "stat-label", "Inspected Cells"))),
-      column(3, div(class = "stat-card", style = "border-left: 4px solid #0D9488; padding: 10px 14px; margin-bottom: 0;",
-                    div(class = "stat-number", style = "color: #0D9488; font-size: 1.35rem;", formatC(n_feats, format = "d", big.mark = ",")),
-                    div(class = "stat-label", "Features (Genes/Peaks)"))),
-      column(3, div(class = "stat-card", style = "border-left: 4px solid #D97706; padding: 10px 14px; margin-bottom: 0;",
-                    div(class = "stat-number", style = "color: #D97706; font-size: 1.35rem;", sprintf("%.1f%%", sparsity_val)),
-                    div(class = "stat-label", "Matrix Sparsity (% Zeros)"))),
-      column(3, div(class = "stat-card", style = "border-left: 4px solid #7C3AED; padding: 10px 14px; margin-bottom: 0;",
-                    div(class = "stat-number", style = "color: #7C3AED; font-size: 1.35rem;", formatC(med_depth, format = "d", big.mark = ",")),
-                    div(class = "stat-label", "Median Library Size")))
+      column(3, div(class = "stat-card", style = "border: 1px solid #E2E8F0; border-left: 3px solid #1E3A8A; padding: 10px 12px; margin-bottom: 0; background: #FFFFFF; border-radius: 6px;",
+                    div(class = "stat-number", style = "color: #0F172A; font-size: 1.35rem; font-family: monospace; font-weight: 700;", formatC(n_cells, format = "d", big.mark = ",")),
+                    div(class = "stat-label", style = "font-size: 0.72rem; letter-spacing: 0.05em; color: #64748B;", "Inspected Cells (N)"))),
+      column(3, div(class = "stat-card", style = "border: 1px solid #E2E8F0; border-left: 3px solid #0D9488; padding: 10px 12px; margin-bottom: 0; background: #FFFFFF; border-radius: 6px;",
+                    div(class = "stat-number", style = "color: #0F172A; font-size: 1.35rem; font-family: monospace; font-weight: 700;", formatC(n_feats, format = "d", big.mark = ",")),
+                    div(class = "stat-label", style = "font-size: 0.72rem; letter-spacing: 0.05em; color: #64748B;", "Features (P)"))),
+      column(3, div(class = "stat-card", style = "border: 1px solid #E2E8F0; border-left: 3px solid #D97706; padding: 10px 12px; margin-bottom: 0; background: #FFFFFF; border-radius: 6px;",
+                    div(class = "stat-number", style = "color: #0F172A; font-size: 1.35rem; font-family: monospace; font-weight: 700;", sprintf("%.1f%%", sparsity_val)),
+                    div(class = "stat-label", style = "font-size: 0.72rem; letter-spacing: 0.05em; color: #64748B;", "Matrix Sparsity (S%)"))),
+      column(3, div(class = "stat-card", style = "border: 1px solid #E2E8F0; border-left: 3px solid #6366F1; padding: 10px 12px; margin-bottom: 0; background: #FFFFFF; border-radius: 6px;",
+                    div(class = "stat-number", style = "color: #0F172A; font-size: 1.35rem; font-family: monospace; font-weight: 700;", formatC(med_depth, format = "d", big.mark = ",")),
+                    div(class = "stat-label", style = "font-size: 0.72rem; letter-spacing: 0.05em; color: #64748B;", "Median Library Depth (L~)")))
     )
   })
 
   output$table_inspect_matrix_view <- renderDT({
     res <- active_inspect_data()
     req(res, res$df)
-    datatable(
+    dt <- datatable(
       res$df,
       options = list(
         pageLength = 10,
@@ -3348,15 +3380,19 @@ server <- function(input, output, session) {
         dom = "ftip"
       ),
       rownames = FALSE,
-      class = "compact stripe hover"
+      class = "compact stripe hover border"
     )
+    num_cols <- which(sapply(res$df, is.numeric))
+    if (length(num_cols) > 0) {
+      dt <- dt %>% formatStyle(num_cols, fontFamily = "monospace", textAlign = "right")
+    }
+    dt
   })
 
   output$download_inspect_data_csv <- downloadHandler(
     filename = function() {
-      choice <- input$sel_inspect_matrix_choice %||% "matrix"
-      mode <- input$opt_inspect_view_mode %||% "data"
-      paste0("scSimEval_", choice, "_", mode, "_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".csv")
+      mode <- input$opt_inspect_view_mode %||% "view"
+      paste0("scSimEval_inspect_", mode, "_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".csv")
     },
     content = function(file) {
       res <- active_inspect_data()
@@ -3371,7 +3407,7 @@ server <- function(input, output, session) {
       head(rv$benchmark_df, 100),
       options = list(pageLength = 10, scrollX = TRUE, autoWidth = TRUE),
       rownames = FALSE,
-      class = "compact stripe hover"
+      class = "compact stripe hover border"
     ) %>% formatRound(columns = which(sapply(head(rv$benchmark_df, 100), is.numeric)), digits = 4)
   })
 
