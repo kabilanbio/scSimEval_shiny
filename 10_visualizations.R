@@ -1726,6 +1726,18 @@ plot_metric_heatmap <- function(
   scale_fill <- match.arg(scale_fill)
   df <- .ingest_bubble_data(benchmark_data)
 
+  if (anyDuplicated(df[, c("Method", "Metric")])) {
+    val_c <- if ("Score_Raw" %in% colnames(df)) "Score_Raw" else if ("Score" %in% colnames(df)) "Score" else "Value"
+    agg_df <- stats::aggregate(
+      df[[val_c]],
+      by = list(Method = df$Method, Category = df$Category, Metric = df$Metric),
+      FUN = mean,
+      na.rm = TRUE
+    )
+    colnames(agg_df)[4] <- "Score_Raw"
+    df <- agg_df
+  }
+
   if (!is.null(category)) {
     df <- df[df$Category %in% category, , drop = FALSE]
   }
@@ -1920,6 +1932,18 @@ plot_metric_mds <- function(
     }
   }
   df <- .ingest_bubble_data(benchmark_data)
+
+  if (anyDuplicated(df[, c("Method", "Metric")])) {
+    val_c <- if ("Score_Raw" %in% colnames(df)) "Score_Raw" else if ("Score" %in% colnames(df)) "Score" else "Value"
+    agg_df <- stats::aggregate(
+      df[[val_c]],
+      by = list(Method = df$Method, Category = df$Category, Metric = df$Metric),
+      FUN = mean,
+      na.rm = TRUE
+    )
+    colnames(agg_df)[4] <- "Score_Raw"
+    df <- agg_df
+  }
 
   if (!is.null(category) && !identical(category, "all")) {
     df <- df[df$Category %in% category, , drop = FALSE]
@@ -2272,6 +2296,18 @@ plot_metric_pca <- function(
   panel <- match.arg(panel)
   df <- .ingest_bubble_data(benchmark_data)
 
+  if (anyDuplicated(df[, c("Method", "Metric")])) {
+    val_c <- if ("Score_Raw" %in% colnames(df)) "Score_Raw" else if ("Score" %in% colnames(df)) "Score" else "Value"
+    agg_df <- stats::aggregate(
+      df[[val_c]],
+      by = list(Method = df$Method, Category = df$Category, Metric = df$Metric),
+      FUN = mean,
+      na.rm = TRUE
+    )
+    colnames(agg_df)[4] <- "Score_Raw"
+    df <- agg_df
+  }
+
   if (by_category) {
     ordered_cats <- .CANONICAL_CATEGORY_ORDER[.CANONICAL_CATEGORY_ORDER %in% unique(df$Category)]
     if (length(ordered_cats) == 0) ordered_cats <- unique(df$Category)
@@ -2607,12 +2643,55 @@ plot_benchmark_bubble_matrix <- function(
   show_missing_dots = TRUE,
   bubble_size_range = c(2.0, 7.8),
   title             = NULL,
-  subtitle          = "Standardized Direction-Aware Fidelity Scores [0, 1] Across 8 Canonical Evaluation Categories",
+  subtitle          = NULL,
   base_size         = 11,
   show_score_labels = FALSE
 ) {
   # --- 1. Ingest ---------------------------------------------------------
   df <- .ingest_bubble_data(data)
+
+  # --- Multi-Dataset Cross-Dataset Averaging ---
+  # If data contains multiple datasets per simulator (e.g. 16 datasets x 6 simulators),
+  # average metrics across all datasets so each simulator is represented cleanly.
+  n_datasets_detected <- 1
+  if ("Dataset" %in% colnames(df)) {
+    n_datasets_detected <- length(unique(df$Dataset))
+  } else if (anyDuplicated(df[, c("Method", "Metric")])) {
+    n_datasets_detected <- max(2, round(nrow(df) / length(unique(paste(df$Method, df$Metric)))))
+  }
+
+  if (n_datasets_detected > 1 || anyDuplicated(df[, c("Method", "Metric")])) {
+    has_norm <- "Score_Norm" %in% colnames(df)
+    has_raw  <- "Score_Raw" %in% colnames(df)
+    score_col <- if (has_raw) "Score_Raw" else if ("Score" %in% colnames(df)) "Score" else "Value"
+
+    agg_raw <- stats::aggregate(
+      df[[score_col]],
+      by = list(Method = df$Method, Category = df$Category, Metric = df$Metric),
+      FUN = mean,
+      na.rm = TRUE
+    )
+    colnames(agg_raw)[4] <- "Score_Raw"
+
+    if (has_norm) {
+      agg_norm <- stats::aggregate(
+        df[["Score_Norm"]],
+        by = list(Method = df$Method, Category = df$Category, Metric = df$Metric),
+        FUN = mean,
+        na.rm = TRUE
+      )
+      agg_raw$Score_Norm <- agg_norm[[4]]
+    }
+    df <- agg_raw
+  }
+
+  if (is.null(subtitle)) {
+    if (n_datasets_detected > 1) {
+      subtitle <- sprintf("Fidelity Scores Averaged Across %d Benchmark Datasets per Simulator [0, 1]", n_datasets_detected)
+    } else {
+      subtitle <- "Standardized Direction-Aware Fidelity Scores [0, 1] Across 8 Canonical Evaluation Categories"
+    }
+  }
 
   # --- 2. Category remapping ---------------------------------------------
   if ("Category" %in% colnames(df)) {
@@ -2890,17 +2969,29 @@ plot_bubble_matrix <- plot_benchmark_bubble_matrix
 # Ingest bubble matrix input into a tidy data.frame
 # @keywords internal
 .ingest_bubble_data <- function(data) {
+  # scSimEval_multidataset_benchmark object
+  if (inherits(data, "scSimEval_multidataset_benchmark")) {
+    if (!is.null(data$benchmark_summary_table)) {
+      return(.ingest_bubble_data(data$benchmark_summary_table))
+    } else if (!is.null(data$granular_benchmark_table)) {
+      return(.ingest_bubble_data(data$granular_benchmark_table))
+    }
+  }
+
   # scSimEval_consolidated object
   if (inherits(data, "scSimEval_consolidated") ||
       (is.list(data) && "consolidated_summary_table" %in% names(data))) {
     tbl <- data$consolidated_summary_table
-    return(data.frame(
-      Method    = tbl$Data_Name,
+    m_col <- if ("Method" %in% colnames(tbl)) tbl$Method else if ("Simulator" %in% colnames(tbl)) tbl$Simulator else tbl$Data_Name
+    res_df <- data.frame(
+      Method    = m_col,
       Category  = tbl$Category,
       Metric    = tbl$Metric,
       Score_Raw = if (!is.null(tbl$Score)) tbl$Score else tbl$Value,
       stringsAsFactors = FALSE
-    ))
+    )
+    if ("Dataset" %in% colnames(tbl)) res_df$Dataset <- tbl$Dataset
+    return(res_df)
   }
 
   # Direct evaluation result object with benchmark_summary_table or metrics_summary_table
@@ -3767,5 +3858,4 @@ compute_method_leaderboard <- function(benchmark_data) {
 
   leaderboard[, c("Overall_Rank", "Method", "Average_Fidelity", "Fidelity_Score"), drop = FALSE]
 }
-
 

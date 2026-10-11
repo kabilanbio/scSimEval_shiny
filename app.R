@@ -6,7 +6,6 @@ library(shiny)
 
 # Google Analytics Measurement ID
 ga_measurement_id <- "G-E28K350YF5"
-
 library(bslib)
 library(ggplot2)
 library(DT)
@@ -47,6 +46,20 @@ if (demo_data_path == "" || !file.exists(demo_data_path)) {
   demo_data_path <- file.path("data", "demo_benchmark_data.rds")
 }
 initial_demo <- if (file.exists(demo_data_path)) readRDS(demo_data_path) else NULL
+# Load multi-dataset benchmark demo if present (16 Datasets x 6 Simulators)
+demo_mset_path <- system.file("shiny", "scSimEvalApp", "data", "demo_multidataset_benchmark.rds", package = "scSimEval")
+if (demo_mset_path == "" || !file.exists(demo_mset_path)) {
+  demo_mset_path <- file.path("data", "demo_multidataset_benchmark.rds")
+}
+initial_multidataset_demo <- if (file.exists(demo_mset_path)) readRDS(demo_mset_path) else NULL
+
+# Source benchmark suite evaluator if running locally
+for (p in c("09_evaluate_benchmark.R", "R/09_evaluate_benchmark.R", "../../R/09_evaluate_benchmark.R", "../../../R/09_evaluate_benchmark.R")) {
+  if (file.exists(p)) {
+    try(source(p, local = FALSE), silent = TRUE)
+    break
+  }
+}
 
 # Standardize Category names to canonical 8 package categories
 standardize_benchmark_categories <- function(df) {
@@ -872,40 +885,6 @@ ui <- page_navbar(
         margin: 18px auto;
         max-width: 640px;
       }
-
-      /* ===== PAGE VIEW COUNTER (Google Analytics) ===== */
-      .pageview-box {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background-color: rgba(255, 255, 255, 0.96);
-        border: 1px solid #C5D5E6;
-        border-radius: 8px;
-        padding: 9px 14px;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.12);
-        z-index: 1050;
-        width: 165px;
-        text-align: center;
-        transition: all 0.25s ease;
-      }
-      .pageview-box:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 18px rgba(0,0,0,0.18);
-        border-color: #1B4F72;
-        background-color: #FFFFFF;
-      }
-      .pageview-title {
-        font-weight: 600;
-        margin-bottom: 3px;
-        font-size: 11.5px;
-        color: #475569;
-        letter-spacing: 0.3px;
-      }
-      .pageview-count {
-        font-size: 19px;
-        font-weight: 800;
-        color: #1B4F72;
-      }
     "))
   ),
     div(
@@ -1067,14 +1046,6 @@ ui <- page_navbar(
           "Local Studio: ", tags$code("scSimEval::launch_scSimEval_app()", style = "background: #E2E8F0; color: #334155; padding: 2px 6px; border-radius: 4px; font-size: 0.76rem;")
         )
       )
-    ),
-    
-    # Fixed Floating Page View Counter Widget (Google Analytics)
-    div(
-      class = "pageview-box",
-      div(class = "pageview-title", icon("eye"), " Total Page Views"),
-      div(class = "pageview-count", textOutput("total_pageviews")),
-      div(style = "font-size: 10px; opacity: 0.75; margin-top: 3px; color: #64748B;", "All Time")
     )
   ),
   
@@ -1090,13 +1061,17 @@ ui <- page_navbar(
         title = div(icon("database", class = "me-2"), "Input Controls"),
         
         radioButtons(
+        radioButtons(
           "opt_data_mode", tags$b("Choose Data Mode:"),
           choices = c(
             "Example Benchmark (6 Simulators)" = "demo",
+            "Multi-Dataset Study (16 Datasets × 6 Simulators)" = "multidataset",
             "Single-Cell (scRNA or scATAC)" = "unimodal",
             "Multiomics (scRNA + scATAC)" = "multiomics",
             "Upload Saved Results (.rds / .csv)" = "upload_bench"
           ),
+          selected = "demo"
+        ),
           selected = "demo"
         ),
         hr(style = "margin: 10px 0;"),
@@ -1107,6 +1082,26 @@ ui <- page_navbar(
           p("Load pre-computed benchmark results for 6 simulators (Splatter, scDesign3, SCRIP, SymSim, dyngen, simATAC) evaluated across 62 metrics.",
             style = "font-size: 0.82rem; color: #475569; line-height: 1.45;"),
           actionButton("btn_load_demo", "Load Example Benchmark (6 Simulators)", class = "btn btn-primary w-100", icon = icon("play"))
+        ),
+        # Mode 1B: Multi-Dataset Benchmark Study (16 Datasets x 6 Simulators)
+        conditionalPanel(
+          condition = "input.opt_data_mode == 'multidataset'",
+          div(
+            style = "font-size: 0.78rem; color: #1E293B; background: #F0FDF4; border-left: 3px solid #16A34A; border-radius: 4px; padding: 8px 10px; margin-bottom: 12px;",
+            div(style = "font-weight: 700; color: #166534; margin-bottom: 2px;", icon("layer-group", class = "me-1"), "Multi-Dataset Study:"),
+            div("Benchmark simulators across multiple experimental datasets (e.g. 16 datasets × 6 simulators). All 62 metrics are averaged across datasets per simulator in the Comparative Bubble Matrix.")
+          ),
+          actionButton("btn_load_multidataset_demo", "Load Example Benchmark (16 Datasets × 6 Simulators)", class = "btn btn-success w-100 mb-3", icon = icon("table-cells")),
+          tags$div(style = "font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #475569; margin-top: 8px; margin-bottom: 4px;", "Ingest Multi-Dataset Results"),
+          fileInput("file_mset_upload", NULL, placeholder = "Select .rds or .csv files...", multiple = TRUE, accept = c(".rds", ".csv")),
+          actionButton("btn_load_uploaded_mset", "Ingest Uploaded Dataset Files", class = "btn btn-outline-primary w-100 mb-3", icon = icon("folder-open")),
+          tags$details(
+            style = "font-size: 0.78rem; color: #64748B; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 8px;",
+            tags$summary(tags$strong("HPC / Batch Evaluation Guide")),
+            p("For high-dimensional single-cell studies with multiple datasets, run evaluation in batch/HPC using:", style = "margin-top: 6px; margin-bottom: 4px;"),
+            tags$code("res <- benchmark_simulation_suite(refs, sims, threads = 8)", style = "display: block; background: #E2E8F0; padding: 4px; border-radius: 4px; font-size: 0.75rem; margin-bottom: 4px;"),
+            p("Save output with ", tags$code("saveRDS(res, 'multidataset_bench.rds')"), " and upload above.", style = "margin-bottom: 0;")
+          )
         ),
         
         # Mode 2: Single-Cell (scRNA-seq or scATAC-seq)
@@ -1187,7 +1182,7 @@ ui <- page_navbar(
         conditionalPanel(
           condition = "input.opt_data_mode == 'upload_bench'",
           p("Load a previously saved benchmark result file (.rds or .csv) from scSimEval.", style = "font-size: 0.82rem; color: #475569;"),
-          fileInput("file_bench_upload", "Select Saved File (.rds / .csv):", accept = c(".rds", ".csv")),
+          fileInput("file_bench_upload", "Select Saved File(s) (.rds / .csv):", multiple = TRUE, accept = c(".rds", ".csv")),
           actionButton("btn_load_uploaded_bench", "Load Saved Results", class = "btn btn-secondary w-100", icon = icon("folder-open"))
         )
       ),
@@ -2646,6 +2641,9 @@ server <- function(input, output, session) {
     cell_types = NULL,
     batch = NULL,
     source_name = "No Data Loaded",
+    is_multidataset = FALSE,
+    datasets = NULL,
+    granular_benchmark_df = NULL,
     dataset_summary_df = NULL
   )
   
@@ -2702,108 +2700,6 @@ server <- function(input, output, session) {
   observeEvent(input$btn_go_help, { nav_select("nav_active", "Help & Getting Started") })
   observeEvent(input$btn_go_contact, { nav_select("nav_active", "Contact") })
   observeEvent(input$btn_empty_help, { nav_select("nav_active", "Help & Getting Started") })
-
-  # ----------------------------------------------------------------------------
-  # Google Analytics: Live / Cached Page Views Counter
-  # ----------------------------------------------------------------------------
-  output$total_pageviews <- renderText({
-    # 1. Baseline cumulative all-time views (from launch through today)
-    baseline_views <- 0
-    
-    # Global process environment to track cumulative sessions across container lifetime
-    if (!exists(".scSimEval_views_env", envir = .GlobalEnv)) {
-      assign(".scSimEval_views_env", new.env(parent = emptyenv()), envir = .GlobalEnv)
-      .scSimEval_views_env$session_count <- 0
-      .scSimEval_views_env$ga_views <- 0
-      .scSimEval_views_env$last_ga_check <- 0
-    }
-    
-    # Increment session count within this running application instance
-    .scSimEval_views_env$session_count <- .scSimEval_views_env$session_count + 1
-    
-    # Read persisted cache file (if present)
-    cached_file_views <- baseline_views
-    cache_path <- "pageviews_cache.rds"
-    if (file.exists(cache_path)) {
-      try({
-        cached <- readRDS(cache_path)
-        if (is.numeric(cached) && cached >= baseline_views) {
-          cached_file_views <- cached
-        }
-      }, silent = TRUE)
-    }
-    
-    # 2. Query Google Analytics 4 (throttled to once every 5 minutes to avoid UI lag)
-    now_ts <- as.numeric(Sys.time())
-    if ((now_ts - .scSimEval_views_env$last_ga_check) > 300) {
-      .scSimEval_views_env$last_ga_check <- now_ts
-      
-      ga_key_content <- Sys.getenv("GA_KEY_JSON", "")
-      ga_key <- ""
-      if (nzchar(ga_key_content)) {
-        tmp_key <- tempfile(fileext = ".json")
-        try(writeLines(ga_key_content, tmp_key), silent = TRUE)
-        ga_key <- tmp_key
-      } else {
-        ga_key <- Sys.getenv("GA_AUTH_FILE", "")
-        if (!nzchar(ga_key)) {
-          candidates <- c(
-            "google_key.json",
-            file.path("www", "google_key.json"),
-            file.path("inst", "shiny", "scSimEvalApp", "google_key.json"),
-            file.path("inst", "shiny", "scSimEvalApp", "www", "google_key.json"),
-            file.path("..", "google_key.json"),
-            file.path("..", "..", "google_key.json")
-          )
-          for (cand in candidates) {
-            if (file.exists(cand)) {
-              ga_key <- cand
-              break
-            }
-          }
-        }
-      }
-      
-      prop_id <- Sys.getenv("GA_PROPERTY_ID", "557610038")
-      
-      if (nzchar(ga_key) && file.exists(ga_key) && requireNamespace("googleAnalyticsR", quietly = TRUE)) {
-        tryCatch({
-          googleAnalyticsR::ga_auth(json_file = ga_key)
-          if (!nzchar(prop_id)) {
-            accs <- tryCatch(googleAnalyticsR::ga_account_list("ga4"), error = function(e) NULL)
-            if (!is.null(accs) && nrow(accs) > 0 && "propertyId" %in% colnames(accs)) {
-              prop_id <- as.character(accs$propertyId[1])
-            }
-          }
-          if (nzchar(prop_id)) {
-            df <- googleAnalyticsR::ga_data(
-              propertyId = prop_id,
-              date_range = c("2026-10-10", "today"),
-              metrics = "screenPageViews"
-            )
-            if (!is.null(df) && nrow(df) > 0 && "screenPageViews" %in% colnames(df)) {
-              val <- sum(as.numeric(df$screenPageViews), na.rm = TRUE)
-              if (val > 0) {
-                .scSimEval_views_env$ga_views <- val
-              }
-            }
-          }
-        }, error = function(e) NULL)
-      }
-    }
-    
-    # 3. Monotonically increasing cumulative total (never resets on container recycling)
-    total_views <- max(
-      baseline_views + .scSimEval_views_env$session_count - 1,
-      cached_file_views + .scSimEval_views_env$session_count - 1,
-      .scSimEval_views_env$ga_views + .scSimEval_views_env$session_count - 1
-    )
-    
-    # Persist updated count to disk cache
-    try(saveRDS(total_views, cache_path), silent = TRUE)
-    
-    formatC(total_views, format = "d", big.mark = ",")
-  })
   # Modal format guide for cell types and batches
   show_metadata_format_modal <- function() {
     showModal(modalDialog(
@@ -2884,6 +2780,86 @@ server <- function(input, output, session) {
   # ----------------------------------------------------------------------------
   # Data Hub: Mode 1 - Load Demo Benchmark
   # ----------------------------------------------------------------------------
+  # ----------------------------------------------------------------------------
+  # Data Hub: Mode 1B - Load Multi-Dataset Benchmark Demo (16 Datasets x 6 Simulators)
+  # ----------------------------------------------------------------------------
+  observeEvent(input$btn_load_multidataset_demo, {
+    if (!is.null(initial_multidataset_demo)) {
+      rv$benchmark_df <- initial_multidataset_demo$granular_benchmark_table
+      rv$granular_benchmark_df <- initial_multidataset_demo$granular_benchmark_table
+      rv$dataset_summary_df <- initial_multidataset_demo$dataset_summary_df
+      rv$methods <- initial_multidataset_demo$methods
+      rv$datasets <- initial_multidataset_demo$datasets
+      rv$is_multidataset <- TRUE
+      rv$source_name <- sprintf("Multi-Dataset Benchmark (%d Datasets × %d Simulators)", length(initial_multidataset_demo$datasets), length(initial_multidataset_demo$methods))
+      
+      updateCheckboxGroupInput(session, "sel_bubble_methods", choices = rv$methods, selected = rv$methods)
+      rv_plot_triggers$bubble <- 0; rv_plot_triggers$sum <- 0; rv_plot_triggers$dist <- 0; rv_plot_triggers$scale <- 0; rv_plot_triggers$box <- 0; rv_plot_triggers$heat <- 0; rv_plot_triggers$pca <- 0; rv_plot_triggers$mds <- 0; rv_plot_triggers$emb <- 0
+      showNotification(sprintf("Loaded multi-dataset benchmark: %d datasets across %d simulators (5,952 metric scores)!", length(initial_multidataset_demo$datasets), length(initial_multidataset_demo$methods)), type = "message")
+    } else {
+      showNotification("Multi-dataset benchmark file (demo_multidataset_benchmark.rds) not found on disk.", type = "warning")
+    }
+  })
+  
+  # Ingest Uploaded Multi-Dataset Benchmark Files
+  observeEvent(input$btn_load_uploaded_mset, {
+    req(input$file_mset_upload)
+    withProgress(message = "Ingesting Multi-Dataset Benchmark Files...", {
+      tryCatch({
+        n_files <- nrow(input$file_mset_upload)
+        all_dfs <- list()
+        all_summaries <- list()
+        
+        for (i in seq_len(n_files)) {
+          fname <- input$file_mset_upload$name[i]
+          fpath <- input$file_mset_upload$datapath[i]
+          ext <- tolower(tools::file_ext(fname))
+          dname <- tools::file_path_sans_ext(fname)
+          
+          if (ext == "rds") {
+            obj <- readRDS(fpath)
+            if (inherits(obj, "scSimEval_multidataset_benchmark")) {
+              all_dfs[[i]] <- obj$granular_benchmark_table
+              if (!is.null(obj$dataset_summary_table)) all_summaries[[i]] <- obj$dataset_summary_table
+            } else if (is.data.frame(obj)) {
+              if (!"Dataset" %in% colnames(obj)) obj$Dataset <- dname
+              all_dfs[[i]] <- obj
+            } else if (is.list(obj) && !is.null(obj$benchmark_summary_table)) {
+              sub_df <- obj$benchmark_summary_table
+              if (!"Dataset" %in% colnames(sub_df)) sub_df$Dataset <- dname
+              all_dfs[[i]] <- sub_df
+              if (!is.null(obj$dataset_summary)) all_summaries[[i]] <- obj$dataset_summary
+            }
+          } else if (ext == "csv") {
+            sub_df <- utils::read.csv(fpath, check.names = FALSE)
+            if (!"Dataset" %in% colnames(sub_df)) sub_df$Dataset <- dname
+            all_dfs[[i]] <- sub_df
+          }
+        }
+        
+        combined_df <- do.call(rbind, all_dfs)
+        if (is.null(combined_df) || nrow(combined_df) == 0) stop("No valid benchmark rows could be parsed from uploaded files.")
+        
+        if (!"Method" %in% colnames(combined_df) && "Simulator" %in% colnames(combined_df)) combined_df$Method <- combined_df$Simulator
+        if (!"Score" %in% colnames(combined_df) && "Value" %in% colnames(combined_df)) combined_df$Score <- combined_df$Value
+        combined_df <- standardize_benchmark_categories(combined_df)
+        
+        rv$benchmark_df <- combined_df
+        rv$granular_benchmark_df <- combined_df
+        rv$methods <- unique(combined_df$Method)
+        rv$datasets <- unique(combined_df$Dataset)
+        rv$is_multidataset <- length(rv$datasets) > 1
+        if (length(all_summaries) > 0) rv$dataset_summary_df <- do.call(rbind, all_summaries)
+        rv$source_name <- sprintf("Multi-Dataset Upload (%d Datasets, %d Simulators)", length(rv$datasets), length(rv$methods))
+        
+        updateCheckboxGroupInput(session, "sel_bubble_methods", choices = rv$methods, selected = rv$methods)
+        rv_plot_triggers$bubble <- 0; rv_plot_triggers$sum <- 0; rv_plot_triggers$dist <- 0; rv_plot_triggers$scale <- 0; rv_plot_triggers$box <- 0; rv_plot_triggers$heat <- 0; rv_plot_triggers$pca <- 0; rv_plot_triggers$mds <- 0; rv_plot_triggers$emb <- 0
+        showNotification(sprintf("Ingested %d datasets and %d simulators successfully!", length(rv$datasets), length(rv$methods)), type = "message")
+      }, error = function(e) {
+        showNotification(paste("Error ingesting multi-dataset files:", e$message), type = "error")
+      })
+    })
+  })
   observeEvent(input$btn_load_demo, {
     if (!is.null(initial_demo)) {
       rv$benchmark_df <- initial_demo$benchmark_summary_table
@@ -3523,6 +3499,7 @@ server <- function(input, output, session) {
             ),
             div(
               style = "border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px; background: #FFFFFF;",
+              uiOutput("ui_mset_preview_controls"),
               DTOutput("table_active_data_preview")
             )
           )
@@ -3550,6 +3527,7 @@ server <- function(input, output, session) {
                     sprintf("Simulators (%d): %s", n_methods, methods_str))
         ),
         div(
+          if (!is.null(rv$benchmark_df) && "Dataset" %in% colnames(rv$benchmark_df) && length(unique(rv$benchmark_df$Dataset)) > 1) span(class = "badge bg-success text-white border me-1", style = "font-size: 0.78rem;", sprintf("%d Datasets", length(unique(rv$benchmark_df$Dataset)))),
           span(class = "badge bg-white text-secondary border", style = "font-size: 0.78rem;", sprintf("%s Records", formatC(n_records, format = "d", big.mark = ","))),
           span(class = "badge bg-white text-primary border ms-1", style = "font-size: 0.78rem;", sprintf("%d Evaluated Metrics", n_metrics))
         )
@@ -3742,14 +3720,80 @@ server <- function(input, output, session) {
     }
   )
 
+  output$ui_mset_preview_controls <- renderUI({
+    req(rv$benchmark_df)
+    if (!"Dataset" %in% colnames(rv$benchmark_df) || length(unique(rv$benchmark_df$Dataset)) <= 1) {
+      return(NULL)
+    }
+    dsets <- unique(rv$benchmark_df$Dataset)
+    div(
+      style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 14px; margin-bottom: 12px;",
+      fluidRow(
+        column(
+          6,
+          selectInput(
+            "sel_preview_dataset", "View Scores For:",
+            choices = c(
+              "Cross-Dataset Average (Summary Across All Datasets)" = "avg",
+              "Granular (All Datasets Combined)" = "all",
+              setNames(dsets, paste0("Dataset: ", dsets))
+            ),
+            selected = "avg"
+          )
+        ),
+        column(
+          6,
+          div(
+            style = "margin-top: 25px; text-align: right;",
+            downloadButton("download_preview_table_csv", "Export Table (CSV)", class = "btn btn-sm btn-outline-secondary", icon = icon("file-csv"))
+          )
+        )
+      )
+    )
+  })
+
+  output$download_preview_table_csv <- downloadHandler(
+    filename = function() { paste0("scSimEval_benchmark_preview_", Sys.Date(), ".csv") },
+    content = function(file) {
+      req(rv$benchmark_df)
+      df <- rv$benchmark_df
+      sel <- input$sel_preview_dataset %||% "avg"
+      if (sel == "avg" && "Dataset" %in% colnames(df)) {
+        has_norm <- "Score_Norm" %in% colnames(df)
+        has_raw  <- "Score_Raw" %in% colnames(df)
+        score_col <- if (has_raw) "Score_Raw" else if ("Score" %in% colnames(df)) "Score" else "Value"
+        agg <- stats::aggregate(df[[score_col]], by = list(Method = df$Method, Category = df$Category, Metric = df$Metric), FUN = mean, na.rm = TRUE)
+        colnames(agg)[4] <- "Average_Score"
+        df <- agg
+      } else if (sel != "all" && "Dataset" %in% colnames(df)) {
+        df <- df[df$Dataset == sel, , drop = FALSE]
+      }
+      utils::write.csv(df, file, row.names = FALSE)
+    }
+  )
+
   output$table_active_data_preview <- renderDT({
     req(rv$benchmark_df)
+    df <- rv$benchmark_df
+    sel <- input$sel_preview_dataset %||% "avg"
+    if ("Dataset" %in% colnames(df) && length(unique(df$Dataset)) > 1) {
+      if (sel == "avg") {
+        has_norm <- "Score_Norm" %in% colnames(df)
+        has_raw  <- "Score_Raw" %in% colnames(df)
+        score_col <- if (has_raw) "Score_Raw" else if ("Score" %in% colnames(df)) "Score" else "Value"
+        agg <- stats::aggregate(df[[score_col]], by = list(Method = df$Method, Category = df$Category, Metric = df$Metric), FUN = mean, na.rm = TRUE)
+        colnames(agg)[4] <- "Average_Score"
+        df <- agg
+      } else if (sel != "all") {
+        df <- df[df$Dataset == sel, , drop = FALSE]
+      }
+    }
     datatable(
-      head(rv$benchmark_df, 100),
+      head(df, 200),
       options = list(pageLength = 10, scrollX = TRUE, autoWidth = TRUE),
       rownames = FALSE,
       class = "compact stripe hover border"
-    ) %>% formatRound(columns = which(sapply(head(rv$benchmark_df, 100), is.numeric)), digits = 4)
+    ) %>% formatRound(columns = which(sapply(head(df, 200), is.numeric)), digits = 4)
   })
 
   # ----------------------------------------------------------------------------
@@ -3929,10 +3973,17 @@ server <- function(input, output, session) {
       mode <- input$rad_bubble_filter_mode %||% "all"
       mode_desc <- if (identical(mode, "custom")) "Custom Selection Benchmark" else "Full Benchmark (All 62 Canonical Measures)"
       
+      n_d <- if ("Dataset" %in% colnames(df)) length(unique(df$Dataset)) else 1
+      sub_title <- if (n_d > 1) {
+        sprintf("%s (Averaged Across %d Datasets): %d Metric(s) across %d Category(ies) for %d Simulator(s)", mode_desc, n_d, n_metrics, n_cats, n_sims)
+      } else {
+        sprintf("%s: %d Metric(s) across %d Category(ies) for %d Simulator(s)", mode_desc, n_metrics, n_cats, n_sims)
+      }
       p + ggplot2::labs(
-        subtitle = sprintf("%s: %d Metric(s) across %d Category(ies) for %d Simulator(s)", mode_desc, n_metrics, n_cats, n_sims),
+        subtitle = sub_title,
         caption = paste0(
           "Circle: standard performance (< 0.96)  |  Square: top performer (>= 0.96).\n",
+          if (n_d > 1) paste0("Metrics averaged across all ", n_d, " evaluated benchmark datasets per simulator.\n") else "",
           "All ", n_metrics, " metrics direction-normalized: for error/distance metrics, scores are inverted as 1 - norm(x) so 1.0 indicates closest agreement to empirical reference."
         )
       )
