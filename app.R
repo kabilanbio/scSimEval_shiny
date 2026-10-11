@@ -767,7 +767,7 @@ ui <- page_navbar(
         'page_title': document.title,
         'page_location': window.location.href
       });
-    ", ga_measurement_id, ga_measurement_id))),
+    ", ga_measurement_id))),
     tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"),
     tags$style(HTML("
       .navbar { box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-weight: 600; }
@@ -1061,7 +1061,6 @@ ui <- page_navbar(
         title = div(icon("database", class = "me-2"), "Input Controls"),
         
         radioButtons(
-        radioButtons(
           "opt_data_mode", tags$b("Choose Data Mode:"),
           choices = c(
             "Example Benchmark (6 Simulators)" = "demo",
@@ -1070,8 +1069,6 @@ ui <- page_navbar(
             "Multiomics (scRNA + scATAC)" = "multiomics",
             "Upload Saved Results (.rds / .csv)" = "upload_bench"
           ),
-          selected = "demo"
-        ),
           selected = "demo"
         ),
         hr(style = "margin: 10px 0;"),
