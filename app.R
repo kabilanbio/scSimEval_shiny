@@ -1081,6 +1081,7 @@ ui <- page_navbar(
           actionButton("btn_load_demo", "Load Example Benchmark (6 Simulators)", class = "btn btn-primary w-100", icon = icon("play"))
         ),
         # Mode 1B: Multi-Dataset Benchmark Study (16 Datasets x 6 Simulators)
+        # Mode 1B: Multi-Dataset Benchmark Study (16 Datasets x 6 Simulators)
         conditionalPanel(
           condition = "input.opt_data_mode == 'multidataset'",
           div(
@@ -1088,16 +1089,38 @@ ui <- page_navbar(
             div(style = "font-weight: 700; color: #166534; margin-bottom: 2px;", icon("layer-group", class = "me-1"), "Multi-Dataset Study:"),
             div("Benchmark simulators across multiple experimental datasets (e.g. 16 datasets × 6 simulators). All 62 metrics are averaged across datasets per simulator in the Comparative Bubble Matrix.")
           ),
-          actionButton("btn_load_multidataset_demo", "Load Example Benchmark (16 Datasets × 6 Simulators)", class = "btn btn-success w-100 mb-3", icon = icon("table-cells")),
-          tags$div(style = "font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #475569; margin-top: 8px; margin-bottom: 4px;", "Ingest Multi-Dataset Results"),
-          fileInput("file_mset_upload", NULL, placeholder = "Select .rds or .csv files...", multiple = TRUE, accept = c(".rds", ".csv")),
-          actionButton("btn_load_uploaded_mset", "Ingest Uploaded Dataset Files", class = "btn btn-outline-primary w-100 mb-3", icon = icon("folder-open")),
-          tags$details(
-            style = "font-size: 0.78rem; color: #64748B; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 8px;",
-            tags$summary(tags$strong("HPC / Batch Evaluation Guide")),
-            p("For high-dimensional single-cell studies with multiple datasets, run evaluation in batch/HPC using:", style = "margin-top: 6px; margin-bottom: 4px;"),
-            tags$code("res <- benchmark_simulation_suite(refs, sims, threads = 8)", style = "display: block; background: #E2E8F0; padding: 4px; border-radius: 4px; font-size: 0.75rem; margin-bottom: 4px;"),
-            p("Save output with ", tags$code("saveRDS(res, 'multidataset_bench.rds')"), " and upload above.", style = "margin-bottom: 0;")
+          radioButtons(
+            "opt_mset_workflow", "Choose Workflow:",
+            choices = c(
+              "Quick Demo / Ingest Precomputed Files" = "demo_precomputed",
+              "Live Evaluation (Upload Multiple Datasets & Simulators)" = "live_runner"
+            ),
+            selected = "demo_precomputed"
+          ),
+          conditionalPanel(
+            condition = "input.opt_mset_workflow == 'demo_precomputed'",
+            actionButton("btn_load_multidataset_demo", "Load Example Benchmark (16 Datasets × 6 Simulators)", class = "btn btn-success w-100 mb-3", icon = icon("table-cells")),
+            tags$div(style = "font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #475569; margin-top: 8px; margin-bottom: 4px;", "Ingest Multi-Dataset Results"),
+            fileInput("file_mset_upload", NULL, placeholder = "Select .rds or .csv files...", multiple = TRUE, accept = c(".rds", ".csv")),
+            actionButton("btn_load_uploaded_mset", "Ingest Uploaded Dataset Files", class = "btn btn-outline-primary w-100 mb-3", icon = icon("folder-open")),
+            tags$details(
+              style = "font-size: 0.78rem; color: #64748B; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 8px;",
+              tags$summary(tags$strong("HPC / Batch Evaluation Guide")),
+              p("For high-dimensional single-cell studies with multiple datasets, run evaluation in batch/HPC using:", style = "margin-top: 6px; margin-bottom: 4px;"),
+              tags$code("res <- benchmark_simulation_suite(refs, sims, threads = 8)", style = "display: block; background: #E2E8F0; padding: 4px; border-radius: 4px; font-size: 0.75rem; margin-bottom: 4px;"),
+              p("Save output with ", tags$code("saveRDS(res, 'multidataset_bench.rds')"), " and upload above.", style = "margin-bottom: 0;")
+            )
+          ),
+          conditionalPanel(
+            condition = "input.opt_mset_workflow == 'live_runner'",
+            tags$div(style = "font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #475569; margin-top: 8px; margin-bottom: 4px;", "1. Reference Datasets (Up to 16)"),
+            fileInput("file_mset_live_refs", NULL, placeholder = "Select reference count matrices...", multiple = TRUE, accept = c(".rds", ".csv", ".tsv", ".txt")),
+            uiOutput("ui_mset_live_refs_badge"),
+            tags$div(style = "font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #475569; margin-top: 10px; margin-bottom: 4px;", "2. Simulators to Evaluate"),
+            numericInput("num_mset_live_sims", "Number of Simulators:", value = 6, min = 1, max = 10, step = 1),
+            p("Under each simulator, upload the simulated datasets matching your reference datasets:", style = "font-size: 0.78rem; color: #64748B; margin-bottom: 6px;"),
+            uiOutput("ui_mset_live_sim_inputs"),
+            actionButton("btn_run_mset_live_eval", "Calculate Multi-Dataset Benchmark", class = "btn btn-primary w-100 mt-2 mb-3", icon = icon("play"))
           )
         ),
         
@@ -2854,6 +2877,161 @@ server <- function(input, output, session) {
         showNotification(sprintf("Ingested %d datasets and %d simulators successfully!", length(rv$datasets), length(rv$methods)), type = "message")
       }, error = function(e) {
         showNotification(paste("Error ingesting multi-dataset files:", e$message), type = "error")
+      })
+    })
+  })
+
+  # Multi-Dataset Live Runner UI & Badge
+  output$ui_mset_live_refs_badge <- renderUI({
+    if (is.null(input$file_mset_live_refs) || nrow(input$file_mset_live_refs) == 0) return(NULL)
+    n_refs <- nrow(input$file_mset_live_refs)
+    div(
+      class = "mt-1 mb-2",
+      span(class = "badge bg-primary text-white", sprintf("%d Reference Datasets Selected", n_refs)),
+      tags$small(class = "text-muted ms-2", paste(head(tools::file_path_sans_ext(input$file_mset_live_refs$name), 3), collapse = ", "), if (n_refs > 3) "..." else "")
+    )
+  })
+
+  output$ui_mset_live_sim_inputs <- renderUI({
+    n_sims <- input$num_mset_live_sims %||% 6
+    default_names <- c("Splatter", "scDesign3", "SCRIP", "SymSim", "dyngen", "simATAC", "SPARSim", "PROSSTT", "scDesign2", "zinbwave")
+    
+    sim_cards <- lapply(seq_len(n_sims), function(i) {
+      sname_def <- if (i <= length(default_names)) default_names[i] else paste0("Simulator_", i)
+      div(
+        class = "sim-input-card mb-3 p-2",
+        style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px;",
+        tags$b(sprintf("Simulator %d:", i), style = "font-size: 0.88rem; color: #1E3A8A;"),
+        textInput(paste0("mset_sim_name_", i), "Simulator Name:", value = sname_def),
+        fluidRow(
+          column(6, numericInput(paste0("mset_sim_time_", i), "Runtime (s):", value = round(20 + i * 15, 1), min = 0.1, step = 1)),
+          column(6, numericInput(paste0("mset_sim_mem_", i), "RAM (MB):", value = round(500 + i * 200, 0), min = 1, step = 10))
+        ),
+        tags$div(style = "font-size: 0.74rem; font-weight: 600; color: #475569; margin-top: 4px; margin-bottom: 2px;", "Upload Simulated Datasets for this Simulator:"),
+        fileInput(paste0("file_mset_sim_", i), NULL, placeholder = sprintf("Simulated matrices for %s...", sname_def), multiple = TRUE, accept = c(".rds", ".csv", ".tsv", ".txt")),
+        uiOutput(paste0("ui_mset_sim_badge_", i))
+      )
+    })
+    tagList(sim_cards)
+  })
+
+  # Live Multi-Dataset Evaluation Across All Simulators
+  observeEvent(input$btn_run_mset_live_eval, {
+    req(input$file_mset_live_refs)
+    n_refs <- nrow(input$file_mset_live_refs)
+    req(n_refs > 0)
+    n_sims <- input$num_mset_live_sims %||% 1
+    
+    withProgress(message = "Multi-Dataset Benchmark", value = 0, {
+      tryCatch({
+        ref_names <- tools::file_path_sans_ext(input$file_mset_live_refs$name)
+        refs_list <- list()
+        ref_summaries <- list()
+        for (r_i in seq_len(n_refs)) {
+          incProgress(0.05 / n_refs, detail = sprintf("Loading reference %d/%d (%s)...", r_i, n_refs, ref_names[r_i]))
+          mat <- read_uploaded_matrix(input$file_mset_live_refs$datapath[r_i], input$file_mset_live_refs$name[r_i])
+          if (inherits(mat, "matrix") && !inherits(mat, "dgCMatrix")) {
+            mat <- Matrix::Matrix(mat, sparse = TRUE)
+          }
+          refs_list[[ref_names[r_i]]] <- mat
+          ref_summaries[[r_i]] <- data.frame(
+            Dataset = ref_names[r_i],
+            Source = "Reference",
+            n_features = nrow(mat),
+            n_cells = ncol(mat),
+            sparsity = round(1 - Matrix::nnzero(mat) / (as.numeric(nrow(mat)) * ncol(mat)), 4),
+            stringsAsFactors = FALSE
+          )
+        }
+        
+        all_records <- list()
+        for (s_i in seq_len(n_sims)) {
+          s_input_id <- paste0("file_mset_sim_", s_i)
+          s_files <- input[[s_input_id]]
+          if (is.null(s_files) || nrow(s_files) == 0) next
+          
+          sim_name <- input[[paste0("mset_sim_name_", s_i)]]
+          if (is.null(sim_name) || !nzchar(trimws(sim_name))) sim_name <- paste0("Simulator_", s_i)
+          sim_time <- input[[paste0("mset_sim_time_", s_i)]] %||% 30
+          sim_mem  <- input[[paste0("mset_sim_mem_", s_i)]] %||% 800
+          
+          n_sim_files <- nrow(s_files)
+          sim_fnames <- tools::file_path_sans_ext(s_files$name)
+          
+          for (f_j in seq_len(n_sim_files)) {
+            d_name <- if (f_j <= n_refs) ref_names[f_j] else paste0("Dataset_", f_j)
+            matched_ref_idx <- which(sapply(ref_names, function(rn) grepl(rn, sim_fnames[f_j], ignore.case = TRUE)))
+            if (length(matched_ref_idx) > 0) d_name <- ref_names[matched_ref_idx[1]]
+            
+            ref_mat <- refs_list[[d_name]]
+            if (is.null(ref_mat)) ref_mat <- refs_list[[1]]
+            
+            incProgress(
+              (0.85 / (n_sims * n_sim_files)),
+              detail = sprintf("Evaluating %s on %s (%d/%d)...", sim_name, d_name, f_j, n_sim_files)
+            )
+            
+            sim_mat <- read_uploaded_matrix(s_files$datapath[f_j], s_files$name[f_j])
+            if (inherits(sim_mat, "matrix") && !inherits(sim_mat, "dgCMatrix")) {
+              sim_mat <- Matrix::Matrix(sim_mat, sparse = TRUE)
+            }
+            
+            eval_res <- evaluate_simulation_accuracy(
+              ref_data = ref_mat,
+              sim_data = sim_mat,
+              compute_bivariate = FALSE,
+              verbose = FALSE
+            )
+            
+            df_sub <- eval_res$metrics_summary_table
+            df_sub$Dataset <- d_name
+            df_sub$Method  <- sim_name
+            df_sub$Score   <- df_sub$Normalized_Score
+            
+            scal_df <- data.frame(
+              Dataset = d_name,
+              Method  = sim_name,
+              Category = "(VIII) Computational Scalability",
+              Metric   = c("elapsed_time_seconds", "peak_memory_mb"),
+              Value    = c(sim_time, sim_mem),
+              Normalized_Score = c(
+                max(0.01, min(1.0, 1.0 - (sim_time / 3600))),
+                max(0.01, min(1.0, 1.0 - (sim_mem / 16000)))
+              ),
+              Score = c(
+                max(0.01, min(1.0, 1.0 - (sim_time / 3600))),
+                max(0.01, min(1.0, 1.0 - (sim_mem / 16000)))
+              ),
+              stringsAsFactors = FALSE
+            )
+            
+            cols_common <- intersect(colnames(df_sub), colnames(scal_df))
+            rec <- rbind(df_sub[, cols_common, drop = FALSE], scal_df[, cols_common, drop = FALSE])
+            all_records[[paste0(sim_name, "_", d_name)]] <- rec
+            
+            rm(sim_mat)
+            gc(verbose = FALSE)
+          }
+        }
+        
+        if (length(all_records) == 0) stop("No simulator output files were uploaded to evaluate.")
+        
+        combined_df <- do.call(rbind, all_records)
+        combined_df <- standardize_benchmark_categories(combined_df)
+        
+        rv$benchmark_df <- combined_df
+        rv$granular_benchmark_df <- combined_df
+        rv$methods <- unique(combined_df$Method)
+        rv$datasets <- unique(combined_df$Dataset)
+        rv$is_multidataset <- length(rv$datasets) > 1
+        if (length(ref_summaries) > 0) rv$dataset_summary_df <- do.call(rbind, ref_summaries)
+        rv$source_name <- sprintf("Multi-Dataset Live Evaluation (%d Datasets, %d Simulators)", length(rv$datasets), length(rv$methods))
+        
+        updateCheckboxGroupInput(session, "sel_bubble_methods", choices = rv$methods, selected = rv$methods)
+        rv_plot_triggers$bubble <- 0; rv_plot_triggers$sum <- 0; rv_plot_triggers$dist <- 0; rv_plot_triggers$scale <- 0; rv_plot_triggers$box <- 0; rv_plot_triggers$heat <- 0; rv_plot_triggers$pca <- 0; rv_plot_triggers$mds <- 0; rv_plot_triggers$emb <- 0
+        showNotification(sprintf("Multi-dataset evaluation complete: %d datasets across %d simulators!", length(rv$datasets), length(rv$methods)), type = "message")
+      }, error = function(e) {
+        showNotification(paste("Multi-dataset evaluation error:", e$message), type = "error")
       })
     })
   })
