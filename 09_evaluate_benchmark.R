@@ -1275,7 +1275,7 @@ benchmark_simulation_suite <- function(
           verbose           = FALSE
         )
       }, error = function(e) {
-        warning(sprintf("Error evaluating '%s' on '%s': %s", s_name, d_name, e$message))
+        warning(sprintf("Failed evaluating '%s' on '%s': %s", s_name, d_name, e$message))
         NULL
       })
       t1 <- Sys.time()

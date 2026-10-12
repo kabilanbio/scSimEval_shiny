@@ -483,7 +483,20 @@ plot_distribution_qc <- function(
   cell_types    = NULL,
   base_size     = 9
 ) {
-  layout <- match.arg(layout)
+  if (is.null(layout) || length(layout) == 0) {
+    layout <- "full"
+  } else {
+    lay_val <- tolower(as.character(layout[1]))
+    if (lay_val %in% c("full", "comprehensive")) {
+      layout <- "full"
+    } else if (lay_val %in% c("density_only", "density")) {
+      layout <- "density_only"
+    } else if (lay_val %in% c("grid_compact", "compact")) {
+      layout <- "grid_compact"
+    } else {
+      layout <- match.arg(layout, c("full", "density_only", "grid_compact"))
+    }
+  }
   ref_mat <- as.matrix(ref_data)
 
   if (!is.list(sim_data) || is.data.frame(sim_data)) {
@@ -2293,7 +2306,20 @@ plot_metric_pca <- function(
   top_n_loadings     = 14,
   base_size          = 11
 ) {
-  panel <- match.arg(panel)
+  if (is.null(panel) || length(panel) == 0) {
+    panel <- "both"
+  } else {
+    panel_val <- tolower(as.character(panel[1]))
+    if (panel_val %in% c("both", "all", "biplot")) {
+      panel <- "both"
+    } else if (panel_val %in% c("methods", "scores", "simulators")) {
+      panel <- "methods"
+    } else if (panel_val %in% c("loadings", "scree", "metrics")) {
+      panel <- "loadings"
+    } else {
+      panel <- match.arg(panel, c("both", "methods", "loadings"))
+    }
+  }
   df <- .ingest_bubble_data(benchmark_data)
 
   if (anyDuplicated(df[, c("Method", "Metric")])) {
@@ -2649,6 +2675,10 @@ plot_benchmark_bubble_matrix <- function(
 ) {
   # --- 1. Ingest ---------------------------------------------------------
   df <- .ingest_bubble_data(data)
+  if (!is.null(df) && nrow(df) > 0) {
+    if ("Metric" %in% colnames(df)) df <- df[!is.na(df$Metric) & df$Metric != "" & df$Metric != "NA", , drop = FALSE]
+    if ("Category" %in% colnames(df)) df <- df[!is.na(df$Category) & df$Category != "" & df$Category != "NA", , drop = FALSE]
+  }
 
   # --- Multi-Dataset Cross-Dataset Averaging ---
   # If data contains multiple datasets per simulator (e.g. 16 datasets x 6 simulators),
@@ -2687,10 +2717,12 @@ plot_benchmark_bubble_matrix <- function(
 
   if (is.null(subtitle)) {
     if (n_datasets_detected > 1) {
-      subtitle <- sprintf("Fidelity Scores Averaged Across %d Benchmark Datasets per Simulator [0, 1]", n_datasets_detected)
+      subtitle <- sprintf("Standardized fidelity scores [0, 1] averaged across %d benchmark datasets", n_datasets_detected)
     } else {
-      subtitle <- "Standardized Direction-Aware Fidelity Scores [0, 1] Across 8 Canonical Evaluation Categories"
+      subtitle <- "Standardized direction-aware fidelity scores [0, 1] across evaluation tiers"
     }
+  } else if (identical(subtitle, "")) {
+    subtitle <- NULL
   }
 
   # --- 2. Category remapping ---------------------------------------------
@@ -2748,29 +2780,38 @@ plot_benchmark_bubble_matrix <- function(
   df$Method <- factor(df$Method, levels = rev(ordered_m))
 
   all_cats_present <- unique(as.character(df$Display_Category))
+  all_cats_present <- all_cats_present[!is.na(all_cats_present) & all_cats_present != "NA"]
   if (compact_strips) {
     strip_map <- .COMPACT_CATEGORY_STRIPS
     df$Display_Category <- as.character(df$Display_Category)
     df$Display_Category <- ifelse(df$Display_Category %in% names(strip_map),
                                   strip_map[df$Display_Category], df$Display_Category)
+    df$Display_Category[is.na(df$Display_Category) | df$Display_Category == "NA"] <- "(I)\nDistribution"
+    valid_present_cats <- unique(as.character(df$Display_Category))
+    valid_present_cats <- valid_present_cats[!is.na(valid_present_cats) & valid_present_cats != "NA"]
+    
     cat_order <- unname(strip_map[.CANONICAL_CATEGORY_ORDER[.CANONICAL_CATEGORY_ORDER %in% names(strip_map)]])
-    cat_order <- c(cat_order, setdiff(unique(df$Display_Category), cat_order))
+    cat_order <- c(cat_order[cat_order %in% valid_present_cats], setdiff(valid_present_cats, cat_order))
+    cat_order <- cat_order[!is.na(cat_order) & cat_order != "NA"]
     df$Display_Category <- factor(df$Display_Category, levels = cat_order)
   } else {
     cat_order <- c(.CANONICAL_CATEGORY_ORDER[.CANONICAL_CATEGORY_ORDER %in% all_cats_present],
                    setdiff(all_cats_present, .CANONICAL_CATEGORY_ORDER))
+    cat_order <- cat_order[!is.na(cat_order) & cat_order != "NA"]
     df$Display_Category <- factor(df$Display_Category, levels = cat_order)
   }
 
   # Metric ordering: custom or alphabetical within category
   if (!is.null(metrics_order)) {
     all_mets <- unique(df$Display_Metric)
+    all_mets <- all_mets[!is.na(all_mets) & all_mets != "NA"]
     ord_mets <- c(metrics_order[metrics_order %in% all_mets], setdiff(all_mets, metrics_order))
     df$Display_Metric <- factor(df$Display_Metric, levels = ord_mets)
   } else {
     category_metric_order <- character(0)
-    for (cat in levels(df$Display_Category)) {
-      mets_in <- sort(unique(df$Display_Metric[df$Display_Category == cat]))
+    for (ct in levels(df$Display_Category)) {
+      mets_in <- sort(unique(df$Display_Metric[df$Display_Category == ct]))
+      mets_in <- mets_in[!is.na(mets_in) & mets_in != "NA"]
       category_metric_order <- c(category_metric_order, mets_in)
     }
     df$Display_Metric <- factor(df$Display_Metric, levels = category_metric_order)
@@ -2784,7 +2825,7 @@ plot_benchmark_bubble_matrix <- function(
                                           if (has_other) "Other Methods"))
   }
 
-  df$Is_Top <- df$Score_Norm >= 0.96
+  df$Is_Top <- !is.na(df$Score_Norm) & df$Score_Norm >= 0.96
 
   # --- 7. Category palette -----------------------------------------------
   base_pal <- .CANONICAL_CATEGORY_COLORS
@@ -2824,16 +2865,17 @@ plot_benchmark_bubble_matrix <- function(
   if (show_missing_dots) {
     grid_df <- expand.grid(Method = levels(df$Method), Display_Metric = levels(df$Display_Metric),
                             stringsAsFactors = FALSE)
-    mc_map  <- unique(df[, c("Display_Metric", "Display_Category")])
+    mc_map  <- unique(df[!is.na(df$Display_Metric) & !is.na(df$Display_Category), c("Display_Metric", "Display_Category")])
     grid_df <- merge(grid_df, mc_map, by = "Display_Metric", all.x = TRUE)
+    grid_df <- grid_df[!is.na(grid_df$Display_Category) & grid_df$Display_Category != "NA", , drop = FALSE]
     p <- p + ggplot2::geom_point(
       data = grid_df, ggplot2::aes(x = .data$Display_Metric, y = .data$Method),
       shape = 16, size = 0.85, color = "#D5D8DC", alpha = 0.60, inherit.aes = FALSE
     )
   }
 
-  # Regular bubbles (circles)
-  df_reg <- df[!df$Is_Top, ]
+  # Regular bubbles (circles) - safe against NA
+  df_reg <- df[!is.na(df$Score_Norm) & !df$Is_Top, , drop = FALSE]
   if (nrow(df_reg) > 0)
     p <- p + ggplot2::geom_point(
       data = df_reg,
@@ -2841,8 +2883,8 @@ plot_benchmark_bubble_matrix <- function(
       shape = 21, color = "#1E293B", stroke = 0.5, alpha = 0.92
     )
 
-  # Top performer bubbles (squares)
-  df_top <- df[df$Is_Top, ]
+  # Top performer bubbles (squares) - safe against NA
+  df_top <- df[!is.na(df$Score_Norm) & df$Is_Top, , drop = FALSE]
   if (nrow(df_top) > 0)
     p <- p + ggplot2::geom_point(
       data = df_top,
@@ -2895,8 +2937,9 @@ plot_benchmark_bubble_matrix <- function(
 
   # --- 11. Publication theme ---------------------------------------------
   if (is.null(title)) {
-    n_metrics <- length(unique(df$Display_Metric))
-    title <- sprintf("Benchmarking Single-Cell Simulation Fidelity Across %d Canonical Measures", n_metrics)
+    title <- "Comparative Evaluation of Single-Cell Simulators"
+  } else if (identical(title, "")) {
+    title <- NULL
   }
   y_title <- if (rank_methods && is.null(methods_order)) "Ranked Simulators" else NULL
 
