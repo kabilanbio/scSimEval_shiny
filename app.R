@@ -2994,6 +2994,79 @@ server <- function(input, output, session) {
       footer = modalButton("Close"),
       div(
         p("Cell-type and batch annotations are optional inputs used to compute clustering metrics (ARI, NMI, Silhouette), marker gene DEGs, and batch mixing confounder alignment:"),
+        # Metric measurement capacity callout
+        div(
+          style = "background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 6px; padding: 14px 16px; margin-bottom: 16px;",
+          h6(tags$b(icon("chart-line", class = "me-1 text-success"), " Quantitative Metric Measurement Capacity by Upload Configuration"), style = "color: #166534; font-size: 0.94rem; margin-bottom: 6px;"),
+          p("Depending on whether metadata files are provided, scSimEval scales the quantitative evaluation suite dynamically across categories:", style = "font-size: 0.82rem; color: #15803D; margin-bottom: 10px;"),
+          tags$div(
+            class = "table-responsive",
+            tags$table(
+              class = "table table-sm table-bordered mb-1 bg-white align-middle",
+              style = "font-size: 0.79rem;",
+              tags$thead(
+                class = "table-light",
+                tags$tr(
+                  tags$th(style = "width: 18%;", "Experiment Mode"),
+                  tags$th(style = "width: 25%;", "Uploaded Inputs"),
+                  tags$th(style = "width: 17%; text-align: center;", "Metrics Measured"),
+                  tags$th(style = "width: 40%;", "Active Evaluation Categories & Scope")
+                )
+              ),
+              tags$tbody(
+                tags$tr(
+                  tags$td(tags$b("Single-Cell (scRNA / scATAC)")),
+                  tags$td("Count Matrix alone (No metadata)"),
+                  tags$td(style = "text-align: center;", span(class = "badge bg-secondary", "~23 Metrics")),
+                  tags$td("Cat I (Distributional Properties, 14 metrics), Cat II (Correlations & Zeroes, 6 metrics), Cat VI (Trajectory, 2 metrics), Cat VIII (Scalability, 2 metrics)")
+                ),
+                tags$tr(
+                  tags$td(tags$b("Single-Cell (scRNA / scATAC)")),
+                  tags$td("Count Matrix + Cell Types"),
+                  tags$td(style = "text-align: center;", span(class = "badge bg-info text-dark", "~35–38 Metrics")),
+                  tags$td("Adds +12–15 metrics: Unlocks Cat III (Cellular Structure & Concordance / ARI, NMI, AMI, Silhouette) and Cat V (Biological Signal / SimBench DE, DP, DV, top DEG Jaccard)")
+                ),
+                tags$tr(
+                  tags$td(tags$b("Single-Cell (scRNA / scATAC)")),
+                  tags$td("Count Matrix + Batch Annotations"),
+                  tags$td(style = "text-align: center;", span(class = "badge bg-info text-dark", "~30 Metrics")),
+                  tags$td("Adds +7 metrics: Unlocks Cat IV (Batch Effects & Confounder Mixing / Batch Silhouette, Shannon entropy, PCR R², CMS, ISI, Seurat mixing)")
+                ),
+                tags$tr(
+                  tags$td(tags$b("Single-Cell (scRNA / scATAC)")),
+                  tags$td(tags$b("Full Metadata (Matrix + Cell Types + Batch)")),
+                  tags$td(style = "text-align: center;", span(class = "badge bg-success", "Up to ~55 Metrics")),
+                  tags$td("Unlocks complete single-cell suite across Categories I, II, III, IV, V, VI, and VIII")
+                ),
+                tags$tr(
+                  tags$td(tags$b("Paired Multiomics (scRNA + scATAC)")),
+                  tags$td("RNA + ATAC Matrices alone (No metadata)"),
+                  tags$td(style = "text-align: center;", span(class = "badge bg-primary", "~48 Metrics")),
+                  tags$td("Both unimodal layers (I, II, VI, VIII) + Cat VII Cross-Modal Coupling (FOSCTTM cell alignment, Match@1, cross-modal generation, RV coefficient, peak-to-gene linkage)")
+                ),
+                tags$tr(
+                  tags$td(tags$b("Paired Multiomics (scRNA + scATAC)")),
+                  tags$td(tags$b("Full Metadata (RNA + ATAC + Cell Types + Batch)")),
+                  tags$td(style = "text-align: center;", span(class = "badge bg-success", "All 62 Metrics")),
+                  tags$td("Complete multiomics benchmarking suite across all 8 canonical categories (I–VIII)")
+                ),
+                tags$tr(
+                  tags$td(tags$b("Unpaired Multiomics (Independent cells)")),
+                  tags$td("RNA + ATAC Matrices alone"),
+                  tags$td(style = "text-align: center;", span(class = "badge bg-secondary", "~38–42 Metrics")),
+                  tags$td("Unimodal distributions for both layers + population-level co-expression module fidelity, Network Jaccard, and cross-modality correlation")
+                ),
+                tags$tr(
+                  tags$td(tags$b("Unpaired Multiomics (Independent cells)")),
+                  tags$td(tags$b("RNA + ATAC + Cell Types (+ Batch)")),
+                  tags$td(style = "text-align: center;", span(class = "badge bg-success", "Up to ~58 Metrics")),
+                  tags$td("Crucial for unpaired: unlocks cluster-matched label transfer accuracy, cell-type regulatory concordance, and technical donor integration")
+                )
+              )
+            )
+          )
+        ),
+
         fluidRow(
           column(6,
             div(style = "background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 14px; margin-bottom: 12px;",
@@ -3017,6 +3090,8 @@ server <- function(input, output, session) {
   }
   observeEvent(input$btn_show_metadata_format, { show_metadata_format_modal() })
   observeEvent(input$btn_show_metadata_format_multi, { show_metadata_format_modal() })
+  observeEvent(input$btn_show_metadata_format_hint, { show_metadata_format_modal() })
+  observeEvent(input$btn_show_metadata_format_multi_hint, { show_metadata_format_modal() })
 
   # Helper function to generate sample metadata data.frame
   get_sample_celltypes_df <- function() {
@@ -4712,6 +4787,23 @@ server <- function(input, output, session) {
         )
       ),
       
+            # Metric Capacity Callout Banner
+      div(
+        class = "alert alert-info py-2 px-3 mb-3 border-info-subtle",
+        style = "background: #F0F9FF; border-left: 4px solid #0284C7; font-size: 0.83rem;",
+        div(class = "d-flex align-items-center justify-content-between flex-wrap gap-2",
+          div(
+            tags$b(icon("circle-info", class = "me-1 text-info"), "Single-Cell Metric Measurement Capacity: "),
+            "Count matrix alone measures ", tags$b("~23 baseline metrics"), " (Distributional properties, correlations, zero-inflation curves, trajectory). ",
+            "Uploading ", tags$span(class = "badge bg-primary-subtle text-primary border border-primary-subtle", "+ Cell Types"), 
+            " unlocks ", tags$b("+12–15 extra metrics"), " (clustering concordance, ARI, NMI, SimBench signal fidelity). ",
+            "Uploading ", tags$span(class = "badge bg-warning-subtle text-warning border border-warning-subtle", "+ Batch Info"), 
+            " unlocks ", tags$b("+7 extra metrics"), " (batch mixing, kBET, LISI, CMS). ",
+            "With full metadata, up to ", tags$b("~55 metrics"), " are computed."
+          ),
+          actionLink("btn_show_metadata_format_hint", "View Formats & Full Breakdown →", class = "fw-bold text-decoration-none", style = "font-size: 0.80rem;")
+        )
+      ),
       # Card 1: Common Biological Reference Single-Cell Datasets (1 to N)
       card(
         class = "mb-3",
@@ -4797,6 +4889,22 @@ server <- function(input, output, session) {
         )
       ),
       
+            # Metric Capacity Callout Banner
+      div(
+        class = "alert alert-primary py-2 px-3 mb-3 border-indigo-subtle",
+        style = "background: #EEF2FF; border-left: 4px solid #4F46E5; font-size: 0.83rem;",
+        div(class = "d-flex align-items-center justify-content-between flex-wrap gap-2",
+          div(
+            tags$b(icon("circle-info", class = "me-1 text-indigo"), "Multiomics Metric Measurement Capacity: "),
+            "Paired RNA + ATAC matrices alone evaluate ", tags$b("~48 metrics"), " (unimodal properties for both layers + Category VII Cross-Modal Coupling, FOSCTTM alignment, Match@1, and peak-to-gene linkages). ",
+            "Including ", tags$span(class = "badge bg-primary-subtle text-primary border border-primary-subtle", "+ Cell Types"), " and ",
+            tags$span(class = "badge bg-warning-subtle text-warning border border-warning-subtle", "+ Batch Info"), 
+            " unlocks the ", tags$b("full suite of 62 metrics across all 8 categories"), ". ",
+            "In Unpaired mode, cell-type labels are essential to unlock cluster-matched cross-modal label transfer."
+          ),
+          actionLink("btn_show_metadata_format_multi_hint", "View Formats & Full Breakdown →", class = "fw-bold text-decoration-none", style = "font-size: 0.80rem;")
+        )
+      ),
       # Card 1: Common Biological Reference Multiomics Datasets (1 to N)
       card(
         class = "mb-3",
