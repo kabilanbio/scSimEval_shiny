@@ -5709,16 +5709,13 @@
       "checksum": "3bc60b2d915218a38ccde339aad7d3b1"
     },
     "app.R": {
-      "checksum": "9bb93a9a511ed7f2a99586e6c7865402"
+      "checksum": "ddc9b13b6e85351a28f06f5e14352ea2"
     },
     "data/demo_benchmark_data.rds": {
       "checksum": "449ee2f7b3ce9d067f05f484d869f1e4"
     },
     "google_key.json": {
       "checksum": "68dae6e7e3909be691e8f8d6b12ea072"
-    },
-    "pageviews_cache.rds": {
-      "checksum": "5416a8c994473cab08e0c725ca8a9b8e"
     },
     "README.md": {
       "checksum": "6297911a11f4f195c6bc6ed1a9c77e7b"
@@ -5779,6 +5776,9 @@
     },
     "09_evaluate_benchmark.R": {
       "checksum": "66f8809519e5c0d4b26c021b05b69c2e"
+    },
+    "www/google_key.json": {
+      "checksum": "68dae6e7e3909be691e8f8d6b12ea072"
     }
   },
   "users": null
